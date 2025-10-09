@@ -4,21 +4,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import styles from '../styles/MenuStyles';
 
-export default function MenuScreen() {
+export default function MenuRRHH() {
   const navigation = useNavigation();
 
+  
   const menuItems = [
-    { title: 'Gestión de Proyectos', screen: 'GestionProyectos' },
-    { title: 'Gestión de Recursos Humanos', screen: 'MenuRRHH' },
-    { title: 'Gestión de Clientes', screen: 'Finanzas' },
-    { title: 'Gestión de Usuarios', screen: 'Reportes' },
-    { title: 'Gestión de Servicios', screen: 'Configuracion' },
+    { title: 'Empleados', screen: 'Empleados' },
+    { title: 'Documentos', screen: 'Documentos' },
+    { title: 'Facturas', screen: 'Facturas' },
+    { title: 'Inventario', screen: 'Inventarios' },
   ];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#6bbbe0ff' }}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Menú Principal</Text>
+        <Text style={styles.title}>Menú RRHH</Text>
 
         <View style={styles.grid}>
           {menuItems.map((item, index) => (
