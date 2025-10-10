@@ -4,7 +4,7 @@
     "slug": "CRMAPP",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/1.ico",
+    "icon": "./assets/1.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/1.ico",
+        "foregroundImage": "./assets/1.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
