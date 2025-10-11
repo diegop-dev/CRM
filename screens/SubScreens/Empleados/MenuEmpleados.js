@@ -1,17 +1,16 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import styles from '../styles/MenuStyles';
+import styles from '../../../styles/MenuStyles';
 
-export default function MenuRRHH() {
+export default function MenuEmpleados() {
   const navigation = useNavigation();
 
   const menuItems = [
-    { title: 'Empleados', screen: 'MenuEmpleados' },
-    { title: 'Documentos', screen: 'Documentos' },
-    { title: 'Facturas', screen: 'Facturas' },
-    { title: 'Inventario', screen: 'Inventarios' },
+    { title: 'Crear Empleados', screen: 'EmpleadosForm' },
+    { title: 'Consultar Empleados', screen: 'ConsultarEmpleados' },
+    { title: 'Editar Empleado', screen: 'EditarEmpleados' },
   ];
 
   return (
@@ -26,13 +25,8 @@ export default function MenuRRHH() {
       >
         {/* Encabezado */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
-          <Image
-            source={require('../assets/1.png')}
-            style={{ width: 60, height: 60, borderRadius: 10, marginRight: 10 }}
-            resizeMode="contain"
-          />
           <Text style={[styles.title, { textAlign: 'left', marginBottom: 0 }]}>
-            Gestión de Recursos Humanos
+            Gestión de Empleados
           </Text>
         </View>
 

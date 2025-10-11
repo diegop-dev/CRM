@@ -8,7 +8,7 @@ export default function MenuScreen() {
   const navigation = useNavigation();
 
   const menuItems = [
-    { title: 'Gestión de Proyectos', screen: 'GestionProyectos' },
+    { title: 'Gestión de Proyectos', screen: 'MenuProyectos' },
     { title: 'Gestión de Recursos Humanos', screen: 'MenuRRHH' },
     { title: 'Gestión de Clientes', screen: 'Finanzas' },
     { title: 'Gestión de Usuarios', screen: 'Reportes' },

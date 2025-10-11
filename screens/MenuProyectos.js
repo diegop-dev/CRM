@@ -4,14 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import styles from '../styles/MenuStyles';
 
-export default function MenuRRHH() {
+export default function MenuProyectos() {
   const navigation = useNavigation();
 
   const menuItems = [
-    { title: 'Empleados', screen: 'MenuEmpleados' },
-    { title: 'Documentos', screen: 'Documentos' },
-    { title: 'Facturas', screen: 'Facturas' },
-    { title: 'Inventario', screen: 'Inventarios' },
+    { title: 'Crear Proyecto', screen: 'GestionProyectos' },
+    { title: 'Editar Proyecto', screen: 'EditarProyecto' },
+    { title: 'Consultar Proyecto', screen: 'ConsultarProyecto' },
   ];
 
   return (
@@ -32,7 +31,7 @@ export default function MenuRRHH() {
             resizeMode="contain"
           />
           <Text style={[styles.title, { textAlign: 'left', marginBottom: 0 }]}>
-            Gestión de Recursos Humanos
+            Gestión de Proyectos
           </Text>
         </View>
 
