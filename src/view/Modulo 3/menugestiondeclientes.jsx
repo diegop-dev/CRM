@@ -1,87 +1,74 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-import { useNavigation } from "@react-navigation/native"; // Para navegar
-
-// Importa las funciones de lógica
 import {
-  handleAgregarCliente,
-  handleEditarCliente,
-  handleConsultarCliente,
-} from "../../controller/Modulo 3/menugestiondeclientes";
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+// Importamos la lógica (hook personalizado)
+import { useMenuLogic } from "../../controller/Modulo 3/menugestiondeclientes";
 
 export default function MenuGestionDeClientesView() {
-  const navigation = useNavigation();
+  const { menuItems, handleNavigation } = useMenuLogic();
 
   return (
-    <View style={styles.container}>
-      {/* Encabezado: Icono y texto en la misma fila */}
-      <View style={styles.header}>
-        <Image
-          source={require("../../../assets/1.png")} // Asumiendo que 1.png es tu icono de header
-          style={styles.headerIcon}
-        />
-        <Text style={styles.headerTitle}>Gestión de Clientes</Text>
-      </View>
-
-      {/* Línea divisora */}
-      <View style={styles.divider} />
-
-      {/* Fila 1 de Botones: Agregar y Editar */}
-      <View style={styles.buttonRow}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => handleAgregarCliente(navigation)}
-        >
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+        {/* Encabezado */}
+        <View style={styles.header}>
           <Image
-            source={require("../../../assets/1.png")} // Reemplaza con tu icono de "Agregar"
-            style={styles.buttonIcon}
+            source={require("../../../assets/1.png")}
+            style={styles.headerIcon}
           />
-          <Text style={styles.buttonText}>Agregar Cliente</Text>
-        </TouchableOpacity>
+          <Text style={styles.headerTitle}>Gestión De Clientes</Text>
+        </View>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => handleEditarCliente(navigation)}
-        >
-          <Image
-            source={require("../../../assets/1.png")} // Reemplaza con tu icono de "Editar"
-            style={styles.buttonIcon}
-          />
-          <Text style={styles.buttonText}>Editar Cliente</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Línea divisora */}
+        <View style={styles.divider} />
 
-      {/* Fila 2 de Botones: Consultar (Centrado y Ancho) */}
-      <View style={styles.centeredRow}>
-        <TouchableOpacity
-          // Aplicamos ambos estilos: el base y el de botón grande
-          style={[styles.button, styles.largeButton]}
-          onPress={() => handleConsultarCliente(navigation)}
-        >
-          <Image
-            source={require("../../../assets/1.png")} // Reemplaza con tu icono de "Consultar"
-            style={styles.buttonIcon}
-          />
-          <Text style={styles.buttonText}>Consultar Cliente</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        {/* Renderizado dinámico de botones */}
+        <View style={styles.grid}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.button,
+                index === menuItems.length - 1 && styles.largeButton,
+              ]}
+              onPress={() => handleNavigation(item.screen)}
+            >
+              <Image
+                source={require("../../../assets/1.png")} // <-- Reemplaza con la ruta correcta de la imagen
+                style={styles.buttonIcon}
+              />
+              <Text style={styles.buttonText}>{item.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-// --- ESTILOS CORREGIDOS ---
+// --- ESTILOS ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F0F2F5",
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 20,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
-    // Eliminamos el marginBottom para que la línea divisora controle el espacio
   },
   headerIcon: {
     width: 48,
@@ -99,39 +86,31 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 1,
     backgroundColor: "#BDC3C7",
-    marginTop: 15, // Espacio reducido después del header
-    marginBottom: 30, // Espacio antes de los botones
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: "100%",
+    marginTop: 15,
     marginBottom: 30,
   },
-  centeredRow: {
-    width: "100%",
-    alignItems: "center",
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   button: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 15,
-    width: "46%", // Ancho para los botones superiores
+    width: "48%",
     alignItems: "center",
     justifyContent: "center",
     minHeight: 140,
+    marginBottom: 20,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
   },
-  // --- ESTILO AÑADIDO ---
   largeButton: {
-    width: "95%", // Ancho específico para el botón de "Consultar"
+    width: "100%",
   },
   buttonIcon: {
     width: 65,

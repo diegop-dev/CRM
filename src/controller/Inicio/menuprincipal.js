@@ -1,12 +1,32 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import { useNavigation } from "@react-navigation/native";
+import { useCallback } from "react";
 
-const menuprincipal = () => {
-  return (
-    <View>
-      <Text>menuprincipal</Text>
-    </View>
-  )
-}
+export const useMenuLogic = () => {
+  const navigation = useNavigation();
 
-export default menuprincipal
+  // Opciones del menú (datos)
+  const menuItems = [
+    { title: "Gestión de Proyectos", screen: "MenuGestionDeProyectos" },
+    {
+      title: "Gestión de Recursos Humanos",
+      screen: "MenuGestionDeRecursosHumanos",
+    },
+    { title: "Gestión de Clientes", screen: "MenuGestionDeClientes" },
+    { title: "Gestión de Servicios", screen: "MenuGestionDeServicios" },
+    { title: "Gestión de Usuarios", screen: "MenuGestiondeusuarios" },
+  ];
+
+  // Función de navegación
+  const handleNavigation = useCallback(
+    (screenName) => {
+      try {
+        navigation.navigate(screenName);
+      } catch (error) {
+        console.error("Error al navegar:", screenName, error);
+      }
+    },
+    [navigation]
+  );
+
+  return { menuItems, handleNavigation };
+};

@@ -18,7 +18,7 @@ import { handleLogin } from "../../controller/Inicio/iniciodesesion";
 
 const { height } = Dimensions.get("window");
 
-export default function InicioDeSesion() {
+export default function InicioDeSesionView() {
   const navigation = useNavigation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -47,7 +47,7 @@ export default function InicioDeSesion() {
         text2: "Has iniciado sesión correctamente",
         visibilityTime: 2500,
       });
-      setTimeout(() => navigation.replace("Menu"), 2500);
+      setTimeout(() => navigation.replace("MenuPrincipal"), 2500);
     } else {
       Toast.show({
         type: "centerToast",

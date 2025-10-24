@@ -1,54 +1,29 @@
-// Esta bandera vivirá mientras la app esté abierta
-// y controlará que solo se pueda navegar una vez a la vez.
-let isNavigating = false;
+// src/Pantallas_Backend/Menu/menuprincipal.js
+import { useNavigation } from "@react-navigation/native";
+import { useCallback } from "react";
 
-/**
- * Función para navegar a la pantalla de Agregar Cliente.
- * @param {object} navigation El objeto de navegación de React Navigation.
- */
-export const handleAgregarCliente = (navigation) => {
-  // Si ya estamos navegando, ignorar este toque.
-  if (isNavigating) return;
+// Lógica separada del menú principal
+export const useMenuLogic = () => {
+  const navigation = useNavigation();
 
-  // 1. Bloquear la navegación
-  isNavigating = true;
-  // 2. Ejecutar la navegación
-  navigation.navigate("AgregarCliente");
+  // Opciones del menú (datos)
+  const menuItems = [
+    { title: "Agregar Cliente", screen: "AgregarCliente" },
+    { title: "Editar Cliente", screen: "EditarCliente" },
+    { title: "Consultar Cliente", screen: "ConsultarCliente" },
+  ];
 
-  // 3. Desbloquear la navegación después de 1 segundo (1000ms).
-  // Esto da tiempo suficiente para que la animación de la
-  // pantalla termine y evita el "double tap".
-  setTimeout(() => {
-    isNavigating = false;
-  }, 1000);
-};
+  // Función de navegación
+  const handleNavigation = useCallback(
+    (screenName) => {
+      try {
+        navigation.navigate(screenName);
+      } catch (error) {
+        console.error("Error al navegar:", screenName, error);
+      }
+    },
+    [navigation]
+  );
 
-/**
- * Función para navegar a la pantalla de Editar Cliente.
- * @param {object} navigation El objeto de navegación de React Navigation.
- */
-export const handleEditarCliente = (navigation) => {
-  // Misma lógica de bloqueo
-  if (isNavigating) return;
-  isNavigating = true;
-  navigation.navigate("EditarCliente");
-
-  setTimeout(() => {
-    isNavigating = false;
-  }, 1000);
-};
-
-/**
- * Función para navegar a la pantalla de Consultar Cliente.
- * @param {object} navigation El objeto de navegación de React Navigation.
- */
-export const handleConsultarCliente = (navigation) => {
-  // Misma lógica de bloqueo
-  if (isNavigating) return;
-  isNavigating = true;
-  navigation.navigate("ConsultarCliente");
-
-  setTimeout(() => {
-    isNavigating = false;
-  }, 1000);
+  return { menuItems, handleNavigation };
 };
