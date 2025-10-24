@@ -7,6 +7,7 @@ import {
   Image,
   ScrollView,
   TextInput,
+  // Platform, // <-- Eliminado
 } from "react-native";
 // No se importa Modal ni Picker
 import { useFormLogic } from "../../controller/Modulo 3/consultarcliente";
@@ -15,7 +16,13 @@ import { useFormLogic } from "../../controller/Modulo 3/consultarcliente";
 const LockedInput = memo(({ label, value, multiline = false }) => (
   <View style={styles.inputContainer}>
     <Text style={styles.inputLabel}>{label}</Text>
-    <View style={styles.lockedInputView}>
+    {/* Ajuste para que el contenedor tenga la altura correcta */}
+    <View
+      style={[
+        styles.lockedInputView,
+        multiline && styles.lockedInputViewMultiline,
+      ]}
+    >
       <TextInput
         style={[
           styles.lockedTextInput,
@@ -28,7 +35,7 @@ const LockedInput = memo(({ label, value, multiline = false }) => (
       />
       <Image
         source={require("../../../assets/1.png")} // Asumiendo que 1.png es tu candado
-        style={styles.lockIcon}
+        style={[styles.lockIcon, multiline && styles.lockIconMultiline]} // Estilo condicional para multilinea
       />
     </View>
   </View>
@@ -58,7 +65,6 @@ export default function ConsultarClienteView() {
   const {
     searchQuery,
     setSearchQuery,
-    // isDataLoaded, <-- Eliminado
     nombre,
     apellidoPaterno,
     apellidoMaterno,
@@ -106,7 +112,6 @@ export default function ConsultarClienteView() {
 
       {/* --- Formulario de Solo Lectura --- */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* --- CAMBIO AQUÍ: Se elimina el 'isDataLoaded' y el 'placeholderText' --- */}
         <>
           {/* --- ID --- */}
           <LockedInput label="ID de Cliente:" value={idCliente} />
@@ -144,7 +149,6 @@ export default function ConsultarClienteView() {
           <LockedInput label="Actualizado el:" value={actualizadoEn} />
           <LockedInput label="Actualizado por:" value={actualizadoPor} />
         </>
-        {/* --- FIN DEL CAMBIO --- */}
       </ScrollView>
     </View>
   );
@@ -155,7 +159,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F0F2F5",
-    paddingTop: 60,
+    // Ajuste multiplataforma
+    paddingTop: 60, // <-- REVERTIDO A TU VALOR ORIGINAL
   },
   // --- Header ---
   header: {
@@ -188,7 +193,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#BDC3C7",
     marginTop: 15,
   },
-  // --- Barra de Búsqueda ---
+  // --- Barra de Búsqueda (Normalizada) ---
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -199,11 +204,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 20,
     marginBottom: 10,
+    height: 50, // <-- Altura normalizada
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
+    paddingHorizontal: 15, // <-- paddingVertical eliminado
     fontSize: 16,
     color: "#333",
   },
@@ -231,29 +236,32 @@ const styles = StyleSheet.create({
     color: "#34495E",
     marginBottom: 6,
   },
-  // --- Placeholder (Eliminado) ---
-  // placeholderText: { ... },
-
-  // --- Inputs Bloqueados ---
+  // --- Inputs Bloqueados (Normalizados) ---
   lockedInputView: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center", // <-- Cambiado a center para los inputs normales
     backgroundColor: "#E0E0E0",
     borderWidth: 1,
     borderColor: "#BDC3C7",
     borderRadius: 8,
+    height: 50, // <-- Altura normalizada
+  },
+  lockedInputViewMultiline: {
+    // Estilo específico para multilinea
+    height: 100,
+    alignItems: "flex-start", // Alinear candado arriba
   },
   lockedTextInput: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
+    paddingHorizontal: 15, // <-- paddingVertical eliminado
     fontSize: 16,
     color: "#555",
     fontWeight: "600",
   },
   lockedTextInputMultiline: {
-    height: 100,
+    height: "100%", // <-- Ajustado para ocupar el contenedor
     textAlignVertical: "top",
+    paddingTop: 12, // Añadir padding superior
   },
   lockIcon: {
     width: 20,
@@ -261,6 +269,9 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     tintColor: "#777",
     marginHorizontal: 15,
-    marginTop: 12,
+  },
+  lockIconMultiline: {
+    // Estilo específico para el candado multilinea
+    marginTop: 12, // Mantener el margen superior
   },
 });

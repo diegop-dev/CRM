@@ -8,21 +8,19 @@ let isNavigating = false;
  */
 export const handleAgregarCliente = (navigation) => {
   // Si ya estamos navegando, ignorar este toque.
-  if (isNavigating) return; 
+  if (isNavigating) return;
 
   // 1. Bloquear la navegación
   isNavigating = true;
-  console.log('Navegando a Agregar Cliente...');
-  
   // 2. Ejecutar la navegación
-  navigation.navigate('AgregarCliente'); 
+  navigation.navigate("AgregarCliente");
 
   // 3. Desbloquear la navegación después de 1 segundo (1000ms).
   // Esto da tiempo suficiente para que la animación de la
   // pantalla termine y evita el "double tap".
   setTimeout(() => {
     isNavigating = false;
-  }, 1000); 
+  }, 1000);
 };
 
 /**
@@ -33,9 +31,7 @@ export const handleEditarCliente = (navigation) => {
   // Misma lógica de bloqueo
   if (isNavigating) return;
   isNavigating = true;
-  
-  console.log('Navegando a Editar Cliente...');
-  navigation.navigate('EditarCliente');
+  navigation.navigate("EditarCliente");
 
   setTimeout(() => {
     isNavigating = false;
@@ -50,9 +46,7 @@ export const handleConsultarCliente = (navigation) => {
   // Misma lógica de bloqueo
   if (isNavigating) return;
   isNavigating = true;
-
-  console.log('Navegando a Consultar Cliente...');
-  navigation.navigate('ConsultarCliente');
+  navigation.navigate("ConsultarCliente");
 
   setTimeout(() => {
     isNavigating = false;

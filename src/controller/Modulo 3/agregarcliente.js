@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { Alert } from "react-native"; // <-- 1. IMPORTADO
+import { Alert } from "react-native";
 
-// --- Función de validación de Email --- (AÑADIDO)
+// --- Función de validación de Email ---
 const validateEmail = (email) => {
-  // Expresión regular simple para validación de email
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return re.test(String(email).toLowerCase());
 };
@@ -17,9 +16,9 @@ export function useFormLogic() {
   const [nombre, setNombre] = useState("");
   const [apellidoPaterno, setApellidoPaterno] = useState("");
   const [apellidoMaterno, setApellidoMaterno] = useState("");
-  const [tipo, setTipo] = useState(""); // Dropdown: Persona, Empresa
-  const [estadoCliente, setEstadoCliente] = useState(""); // Dropdown: Activo, Inactivo, Potencial
-  const [sexo, setSexo] = useState(""); // Dropdown: Hombre, Mujer
+  const [tipo, setTipo] = useState("");
+  const [estadoCliente, setEstadoCliente] = useState("");
+  const [sexo, setSexo] = useState("");
   const [correo, setCorreo] = useState("");
   const [telefono, setTelefono] = useState("");
   const [calle, setCalle] = useState("");
@@ -31,74 +30,42 @@ export function useFormLogic() {
   const [descripcion, setDescripcion] = useState("");
 
   // --- Estados para los campos de auditoría (no editables) ---
-  const [idCliente, setIdCliente] = useState("C-..."); // Autogenerado
-  const [creadoEn, setCreadoEn] = useState("...cargando"); // DD/MM/AAAA
-  const [creadoPor, setCreadoPor] = useState("...cargando"); // ID de usuario
-  const [actualizadoEn, setActualizadoEn] = useState("N/A"); // DD/MM/AAAA
-  const [actualizadoPor, setActualizadoPor] = useState("N/A"); // ID de usuario
+  const [idCliente, setIdCliente] = useState("C-...");
+  const [creadoEn, setCreadoEn] = useState("...cargando");
+  const [creadoPor, setCreadoPor] = useState("...cargando");
+  const [actualizadoEn, setActualizadoEn] = useState("N/A");
+  const [actualizadoPor, setActualizadoPor] = useState("N/A");
 
-  // --- Estados para los Modales ---
-  const [isConfirmVisible, setIsConfirmVisible] = useState(false);
-  const [isSuccessVisible, setIsSuccessVisible] = useState(false);
-
-  // --- Efecto para simular la carga de datos de auditoría al abrir la pantalla ---
+  // --- Efecto para simular la carga de datos de auditoría ---
   useEffect(() => {
-    // Simula la obtención de un nuevo ID de cliente
     const nuevoId = `C-${Math.floor(1000 + Math.random() * 9000)}`;
     setIdCliente(nuevoId);
-
-    // Simula la obtención del usuario logueado y la fecha actual
-    const hoy = new Date().toLocaleDateString("es-ES"); // Formato DD/MM/AAAA
-    const usuarioLogueado = "001"; // ID del usuario (ej. admin)
+    const hoy = new Date().toLocaleDateString("es-ES");
+    const usuarioLogueado = "001";
 
     setCreadoEn(hoy);
     setCreadoPor(usuarioLogueado);
     setActualizadoEn("N/A");
     setActualizadoPor("N/A");
-  }, []); // El array vacío [] asegura que esto solo se ejecute una vez
+  }, []);
 
-  // --- Manejadores de eventos de los modales ---
-
-  // 1. Al presionar "Guardar", (MODIFICADO CON VALIDACIONES)
+  // --- Manejador de Guardado (Modificado con Alertas) ---
   const handleGuardarPress = () => {
-    // --- INICIO DE VALIDACIONES ---
+    // 1. Validaciones
     const errors = [];
-
-    // Requeridos
     if (!nombre) errors.push("Nombre");
     if (!apellidoPaterno) errors.push("Apellido Paterno");
     if (!tipo) errors.push("Tipo");
     if (!estadoCliente) errors.push("Estado Cliente");
-
-    // Contacto (Requerido + Formato)
-    if (!correo) {
-      errors.push("Correo");
-    } else if (!validateEmail(correo)) {
-      errors.push("Correo Formato");
-    }
-
-    if (!telefono) {
-      errors.push("Teléfono");
-    } else if (!/^\d{10}$/.test(telefono)) {
-      // Asume 10 dígitos numéricos
-      errors.push("Teléfono Formato");
-    }
-
-    // Dirección (Requeridos)
+    if (!correo || !validateEmail(correo)) errors.push("Correo");
+    if (!telefono || !/^\d{10}$/.test(telefono)) errors.push("Teléfono");
     if (!calle) errors.push("Calle");
     if (!colonia) errors.push("Colonia");
     if (!ciudad) errors.push("Ciudad");
     if (!estado) errors.push("Estado");
     if (!pais) errors.push("País");
+    if (!codigoPostal || !/^\d{5}$/.test(codigoPostal)) errors.push("CP");
 
-    if (!codigoPostal) {
-      errors.push("CP");
-    } else if (!/^\d{5}$/.test(codigoPostal)) {
-      // Asume 5 dígitos numéricos
-      errors.push("CP Formato");
-    }
-
-    // Si hay errores, mostrar alerta general y detener
     if (errors.length > 0) {
       Alert.alert(
         "Campos incompletos o incorrectos",
@@ -106,59 +73,65 @@ export function useFormLogic() {
       );
       return;
     }
-    // --- FIN DE VALIDACIONES ---
 
-    console.log("Mostrando modal de confirmación...");
-    setIsConfirmVisible(true);
-  };
+    // 2. Alerta de Confirmación (reemplaza el modal)
+    Alert.alert(
+      "Confirmar Guardado",
+      "¿Está seguro que desea agregar al cliente?",
+      [
+        // Botón Cancelar
+        {
+          text: "Cancelar",
+          onPress: () => console.log("Guardado cancelado."),
+          style: "cancel",
+        },
+        // Botón Confirmar
+        {
+          text: "Confirmar",
+          onPress: () => {
+            console.log("Guardado confirmado. Simulando API call...");
 
-  // 2. Al presionar "Cancelar" en el modal
-  const handleCancelarGuardado = () => {
-    console.log("Guardado cancelado.");
-    setIsConfirmVisible(false);
-  };
+            // 3. Lógica de Guardado (antes en handleConfirmarGuardado)
+            const datosCliente = {
+              id_cliente: idCliente,
+              nombre,
+              apellido_paterno: apellidoPaterno,
+              apellido_materno: apellidoMaterno,
+              tipo,
+              estado_cliente: estadoCliente,
+              sexo,
+              correo_electronico: correo,
+              telefono,
+              calle,
+              colonia,
+              ciudad,
+              estado,
+              pais,
+              codigo_postal: codigoPostal,
+              descripcion,
+              created_at: creadoEn,
+              created_by: creadoPor,
+            };
+            console.log("Enviando datos:", datosCliente);
 
-  // 3. Al presionar "Confirmar" en el modal
-  const handleConfirmarGuardado = () => {
-    console.log("Guardado confirmado. Simulando API call...");
-    setIsConfirmVisible(false);
-
-    // --- Simulación de guardado en Base de Datos ---
-    const datosCliente = {
-      id_cliente: idCliente,
-      nombre,
-      apellido_paterno: apellidoPaterno,
-      apellido_materno: apellidoMaterno,
-      tipo,
-      estado_cliente: estadoCliente,
-      sexo,
-      correo_electronico: correo,
-      telefono,
-      calle,
-      colonia,
-      ciudad,
-      estado,
-      pais,
-      codigo_postal: codigoPostal,
-      descripcion,
-      created_at: creadoEn,
-      created_by: creadoPor,
-    };
-
-    console.log("Enviando datos:", datosCliente);
-
-    // Al recibir éxito de la API:
-    setTimeout(() => {
-      console.log("Respuesta de API: Éxito");
-      setIsSuccessVisible(true);
-    }, 500);
-  };
-
-  // 4. Al cerrar el modal de "Éxito"
-  const handleCerrarExito = () => {
-    setIsSuccessVisible(false);
-    console.log("Regresando al menú...");
-    navigation.goBack(); // Regresa a la pantalla anterior (menú)
+            // 4. Simulación de API y Alerta de Éxito
+            setTimeout(() => {
+              console.log("Respuesta de API: Éxito");
+              Alert.alert("Éxito", "Cliente agregado correctamente.", [
+                // 5. Botón Aceptar (antes en handleCerrarExito)
+                {
+                  text: "Aceptar",
+                  onPress: () => {
+                    console.log("Regresando al menú...");
+                    navigation.goBack();
+                  },
+                },
+              ]);
+            }, 500); // Simula retraso de red
+          },
+        },
+      ]
+    );
   };
 
   // --- Retornar todos los estados y funciones para que el JSX los use ---
@@ -200,13 +173,8 @@ export function useFormLogic() {
     creadoPor,
     actualizadoEn,
     actualizadoPor,
-    // Estados de modales
-    isConfirmVisible,
-    isSuccessVisible,
+    // Estados de modales (Eliminados)
     // Manejadores
     handleGuardarPress,
-    handleCancelarGuardado,
-    handleConfirmarGuardado,
-    handleCerrarExito,
   };
 }

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { Alert } from "react-native"; // <-- Solo usaremos Alert
+import { Alert } from "react-native";
 
-// ... (validateEmail se mantiene igual) ...
+// --- Función de validación de Email ---
 const validateEmail = (email) => {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return re.test(String(email).toLowerCase());
@@ -12,12 +12,13 @@ const validateEmail = (email) => {
 export function useFormLogic() {
   const navigation = useNavigation();
 
-  // ... (Estados de campos se mantienen igual) ...
+  // --- Estados para búsqueda y bloqueo ---
   const [searchQuery, setSearchQuery] = useState("");
   const [isFormLocked, setIsFormLocked] = useState(true);
+
+  // --- Estados para los campos del formulario ---
   const [nombre, setNombre] = useState("");
   const [apellidoPaterno, setApellidoPaterno] = useState("");
-  // ... (otros campos) ...
   const [apellidoMaterno, setApellidoMaterno] = useState("");
   const [tipo, setTipo] = useState("");
   const [estadoCliente, setEstadoCliente] = useState("");
@@ -31,25 +32,22 @@ export function useFormLogic() {
   const [pais, setPais] = useState("");
   const [codigoPostal, setCodigoPostal] = useState("");
   const [descripcion, setDescripcion] = useState("");
+
+  // --- Estados para los campos de auditoría ---
   const [idCliente, setIdCliente] = useState("");
   const [creadoEn, setCreadoEn] = useState("");
   const [creadoPor, setCreadoPor] = useState("");
   const [actualizadoEn, setActualizadoEn] = useState("");
   const [actualizadoPor, setActualizadoPor] = useState("");
-  const [isConfirmVisible, setIsConfirmVisible] = useState(false);
-  const [isSuccessVisible, setIsSuccessVisible] = useState(false);
 
-  // --- ESTADOS DE MODAL DE ERROR ELIMINADOS ---
-  // const [isErrorModalVisible, setIsErrorModalVisible] = useState(false);
-  // const [errorMessages, setErrorMessages] = useState("");
-
-  // ... (handleBuscarCliente se mantiene igual) ...
+  // --- Manejador de la Búsqueda ---
   const handleBuscarCliente = () => {
     if (!searchQuery) {
       Alert.alert("Error", "Por favor, ingrese un ID de cliente para buscar.");
       return;
     }
-    // ... (Simulación de carga de datos) ...
+    console.log("Buscando cliente con ID:", searchQuery);
+    // Simulación de carga de datos
     const dummyData = {
       id_cliente: searchQuery,
       nombre: "Juan",
@@ -93,11 +91,13 @@ export function useFormLogic() {
     setActualizadoEn(dummyData.updated_at);
     setActualizadoPor(dummyData.updated_by);
     setIsFormLocked(false);
+    console.log("Cliente cargado y formulario desbloqueado.");
   };
 
-  // 1. Al presionar "Guardar" (Modificado con Alert simple)
+  // --- Manejador de Guardado (Modificado con Alertas) ---
   const handleGuardarPress = () => {
     if (isFormLocked) {
+      // Esta alerta simple está bien aquí
       Alert.alert(
         "Formulario bloqueado",
         "Primero debe buscar y cargar un cliente para poder editarlo."
@@ -105,8 +105,8 @@ export function useFormLogic() {
       return;
     }
 
+    // 1. Validaciones
     const errors = [];
-    // ... (Validaciones se mantienen igual) ...
     if (!nombre) errors.push("Nombre");
     if (!apellidoPaterno) errors.push("Apellido Paterno");
     if (!tipo) errors.push("Tipo");
@@ -120,45 +120,79 @@ export function useFormLogic() {
     if (!pais) errors.push("País");
     if (!codigoPostal || !/^\d{5}$/.test(codigoPostal)) errors.push("CP");
 
-    // --- CAMBIO PRINCIPAL AQUÍ ---
     if (errors.length > 0) {
-      // Mostrar un solo Alert general
       Alert.alert(
         "Campos incompletos o incorrectos",
         "Por favor, revise el formulario. Hay campos obligatorios vacíos o con formato no válido."
       );
       return;
     }
-    // --- FIN DEL CAMBIO ---
 
-    setIsConfirmVisible(true);
+    // 2. Alerta de Confirmación
+    Alert.alert(
+      "Confirmar Edición",
+      "¿Está seguro que desea editar al cliente?",
+      [
+        // Botón Cancelar
+        {
+          text: "Cancelar",
+          onPress: () => console.log("Edición cancelada."),
+          style: "cancel",
+        },
+        // Botón Confirmar
+        {
+          text: "Confirmar",
+          onPress: () => {
+            console.log("Edición confirmada. Simulando API call (PUT)...");
+
+            // 3. Lógica de Actualización
+            const hoy = new Date().toLocaleDateString("es-ES");
+            const usuarioLogueado = "001"; // ID del usuario actual
+
+            // Actualizamos el estado (simulación)
+            setActualizadoEn(hoy);
+            setActualizadoPor(usuarioLogueado);
+
+            const datosClienteActualizados = {
+              id_cliente: idCliente,
+              nombre,
+              apellido_paterno: apellidoPaterno,
+              // ... todos los demás campos ...
+              updated_at: hoy,
+              updated_by: usuarioLogueado,
+            };
+            console.log(
+              "Enviando datos actualizados:",
+              datosClienteActualizados
+            );
+
+            // 4. Simulación de API y Alerta de Éxito
+            setTimeout(() => {
+              console.log("Respuesta de API: Éxito");
+              Alert.alert("Éxito", "Cliente editado correctamente.", [
+                // 5. Botón Aceptar
+                {
+                  text: "Aceptar",
+                  onPress: () => {
+                    console.log("Regresando al menú...");
+                    navigation.goBack();
+                  },
+                },
+              ]);
+            }, 500); // Simula retraso de red
+          },
+        },
+      ]
+    );
   };
 
-  // ... (handleCancelarGuardado y handleConfirmarGuardado se mantienen igual) ...
-  const handleCancelarGuardado = () => {
-    setIsConfirmVisible(false);
-  };
-  const handleConfirmarGuardado = () => {
-    setIsConfirmVisible(false);
-    // ... (lógica de actualización) ...
-    setTimeout(() => {
-      setIsSuccessVisible(true);
-    }, 500);
-  };
-
-  const handleCerrarExito = () => {
-    setIsSuccessVisible(false);
-    navigation.goBack();
-  };
-
-  // --- MANEJADOR DE ERROR ELIMINADO ---
-  // const handleErrorModalClose = () => { ... };
-
-  // --- Retornar todos los estados y funciones ---
+  // --- Retornar estados y funciones necesarios ---
   return {
+    // Búsqueda y bloqueo
     searchQuery,
     setSearchQuery,
     isFormLocked,
+    // Campos del formulario
     nombre,
     setNombre,
     apellidoPaterno,
@@ -189,21 +223,14 @@ export function useFormLogic() {
     setCodigoPostal,
     descripcion,
     setDescripcion,
+    // Campos de auditoría
     idCliente,
     creadoEn,
     creadoPor,
     actualizadoEn,
     actualizadoPor,
-    // Modales
-    isConfirmVisible,
-    isSuccessVisible,
-    // (Estados de error eliminados)
-    // Manejadores
+    // Manejadores principales
     handleBuscarCliente,
     handleGuardarPress,
-    handleCancelarGuardado,
-    handleConfirmarGuardado,
-    handleCerrarExito,
-    // (Manejador de error eliminado)
   };
 }

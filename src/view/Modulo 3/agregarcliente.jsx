@@ -7,28 +7,29 @@ import {
   Image,
   ScrollView,
   TextInput,
-  Modal,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useFormLogic } from "../../controller/Modulo 3/agregarcliente"; // Importamos la lógica
 
 // --- Componente de Input Reutilizable ---
-const FormInput = ({ label, value, onChangeText, placeholder, ...props }) => (
-  <View style={styles.inputContainer}>
-    <Text style={styles.inputLabel}>{label}</Text>
-    <TextInput
-      style={styles.textInput}
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={placeholder || label}
-      placeholderTextColor="#999"
-      {...props}
-    />
-  </View>
+const FormInput = React.memo(
+  ({ label, value, onChangeText, placeholder, ...props }) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.inputLabel}>{label}</Text>
+      <TextInput
+        style={styles.textInput}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder || label}
+        placeholderTextColor="#999"
+        {...props}
+      />
+    </View>
+  )
 );
 
-// --- Componente de Input Bloqueado Reutilizable (Modificado) ---
-const LockedInput = ({ label, value }) => (
+// --- Componente de Input Bloqueado Reutilizable ---
+const LockedInput = React.memo(({ label, value }) => (
   <View style={styles.inputContainer}>
     <Text style={styles.inputLabel}>{label}</Text>
     <View style={styles.lockedInputView}>
@@ -38,35 +39,41 @@ const LockedInput = ({ label, value }) => (
         editable={false}
       />
       <Image
-        source={require("../../../assets/1.png")} // <-- Reemplaza con tu imagen de candado
+        source={require("../../../assets/1.png")} // <-- Tu imagen de candado
         style={styles.lockIcon}
       />
     </View>
   </View>
-);
+));
 
 // --- Componente de Dropdown (Picker) Reutilizable ---
-const FormPicker = ({ label, selectedValue, onValueChange, items }) => (
-  <View style={styles.inputContainer}>
-    <Text style={styles.inputLabel}>{label}</Text>
-    <View style={styles.pickerContainer}>
-      <Picker
-        selectedValue={selectedValue}
-        onValueChange={onValueChange}
-        style={styles.picker}
-      >
-        <Picker.Item label="Seleccione..." value="" />
-        {items.map((item) => (
-          <Picker.Item key={item.value} label={item.label} value={item.value} />
-        ))}
-      </Picker>
+const FormPicker = React.memo(
+  ({ label, selectedValue, onValueChange, items }) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.inputLabel}>{label}</Text>
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={selectedValue}
+          onValueChange={onValueChange}
+          style={styles.picker} // <-- Estilo ajustado
+        >
+          <Picker.Item label="Seleccione..." value="" />
+          {items.map((item) => (
+            <Picker.Item
+              key={item.value}
+              label={item.label}
+              value={item.value}
+            />
+          ))}
+        </Picker>
+      </View>
     </View>
-  </View>
+  )
 );
 
 // --- Componente Principal de la Pantalla ---
 export default function AgregarClienteView() {
-  // Obtenemos toda la lógica y estados desde el hook
+  // Lógica importada (sin estados/manejadores de modal)
   const {
     nombre,
     setNombre,
@@ -103,12 +110,7 @@ export default function AgregarClienteView() {
     creadoPor,
     actualizadoEn,
     actualizadoPor,
-    isConfirmVisible,
-    isSuccessVisible,
-    handleGuardarPress,
-    handleCancelarGuardado,
-    handleConfirmarGuardado,
-    handleCerrarExito,
+    handleGuardarPress, // <-- Solo necesitamos este manejador
   } = useFormLogic();
 
   return (
@@ -128,7 +130,6 @@ export default function AgregarClienteView() {
 
       {/* --- Formulario con Scroll --- */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* ... (El formulario no cambia) ... */}
         <LockedInput label="ID de Cliente:" value={idCliente} />
         <FormInput
           label="Nombre del Cliente:"
@@ -221,67 +222,6 @@ export default function AgregarClienteView() {
           <Text style={styles.saveButtonText}>Guardar</Text>
         </TouchableOpacity>
       </ScrollView>
-
-      {/* --- Modal de Confirmación (Modificado) --- */}
-      <Modal visible={isConfirmVisible} transparent={true} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalText}>
-              ¿Está seguro que desea agregar al cliente?
-            </Text>
-            <View style={styles.modalButtonRow}>
-              <TouchableOpacity
-                style={[
-                  // <-- CAMBIO AQUÍ
-                  styles.modalButtonBase,
-                  styles.modalButtonRowItem,
-                  styles.modalButtonCancel,
-                ]}
-                onPress={handleCancelarGuardado}
-              >
-                <Text style={styles.modalButtonTextCancel}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  // <-- CAMBIO AQUÍ
-                  styles.modalButtonBase,
-                  styles.modalButtonRowItem,
-                  styles.modalButtonConfirm,
-                ]}
-                onPress={handleConfirmarGuardado}
-              >
-                <Text style={styles.modalButtonTextConfirm}>Confirmar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* --- Modal de Éxito (Modificado) --- */}
-      <Modal visible={isSuccessVisible} transparent={true} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
-            <Image
-              source={require("../../../assets/1.png")}
-              style={styles.successIcon}
-            />
-            <Text style={[styles.modalText, { marginTop: 15 }]}>
-              Cliente agregado correctamente.
-            </Text>
-            <TouchableOpacity
-              style={[
-                // <-- CAMBIO AQUÍ
-                styles.modalButtonBase,
-                styles.modalButtonWide,
-                styles.modalButtonConfirm,
-              ]}
-              onPress={handleCerrarExito}
-            >
-              <Text style={styles.modalButtonTextConfirm}>Aceptar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -291,7 +231,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F0F2F5",
-    paddingTop: 60,
+    paddingTop: 60, // <-- REVERTIDO A TU VALOR ORIGINAL
   },
   // --- Header ---
   header: {
@@ -345,14 +285,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#BDC3C7",
     borderRadius: 8,
-    paddingVertical: 12,
     paddingHorizontal: 15,
     fontSize: 16,
     color: "#333",
+    // Altura y padding vertical normalizados
+    height: 50,
+    paddingVertical: 10,
   },
   multilineInput: {
     height: 100,
     textAlignVertical: "top",
+    paddingTop: 12, // Mejor padding para multilinea
   },
   // --- Inputs Bloqueados ---
   lockedInputView: {
@@ -362,10 +305,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#BDC3C7",
     borderRadius: 8,
+    height: 50, // Altura normalizada
   },
   lockedTextInput: {
     flex: 1,
-    paddingVertical: 12,
     paddingHorizontal: 15,
     fontSize: 16,
     color: "#555",
@@ -384,10 +327,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#BDC3C7",
     borderRadius: 8,
+    height: 50, // <-- Altura movida aquí
     justifyContent: "center",
   },
   picker: {
-    height: 50,
+    // height: 50, <-- Eliminada de aquí
     width: "100%",
     color: "#333",
   },
@@ -402,74 +346,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: "bold",
-  },
-  // --- Estilos de Modales ---
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalView: {
-    width: "85%",
-    backgroundColor: "white",
-    borderRadius: 15,
-    padding: 20,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalText: {
-    fontSize: 18,
-    fontWeight: "500",
-    textAlign: "center",
-    marginBottom: 25,
-  },
-  successIcon: {
-    width: 50,
-    height: 50,
-    resizeMode: "contain",
-  },
-  modalButtonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  // --- ESTILOS DE BOTONES DE MODAL CORREGIDOS ---
-  modalButtonBase: {
-    // Estilo base para todos los botones de modal
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    alignItems: "center",
-  },
-  modalButtonRowItem: {
-    // Para los botones que están en fila (Confirmar/Cancelar)
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  modalButtonWide: {
-    // Para el botón de 'Aceptar' que ocupa todo el ancho
-    width: "100%",
-  },
-  modalButtonCancel: {
-    backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderColor: "#E74C3C",
-  },
-  modalButtonTextCancel: {
-    color: "#E74C3C",
-    fontWeight: "bold",
-  },
-  modalButtonConfirm: {
-    backgroundColor: "#27AE60",
-  },
-  modalButtonTextConfirm: {
-    color: "white",
     fontWeight: "bold",
   },
 });

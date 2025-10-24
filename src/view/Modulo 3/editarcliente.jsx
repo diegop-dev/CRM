@@ -8,11 +8,10 @@ import {
   Image,
   ScrollView,
   TextInput,
-  Modal,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 // Asegúrate que esta ruta sea correcta para tu proyecto
-import { useFormLogic } from "../../controller/Modulo 3/editarcliente"; 
+import { useFormLogic } from "../../controller/Modulo 3/editarcliente";
 
 // --- Componente de Input Reutilizable (Optimizado y con candado) ---
 const FormInput = memo(
@@ -23,7 +22,7 @@ const FormInput = memo(
         style={[styles.inputWrapper, !props.editable && styles.disabledInput]}
       >
         <TextInput
-          style={styles.textInputInternal} 
+          style={styles.textInputInternal}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder || label}
@@ -68,7 +67,7 @@ const FormPicker = memo(
         <Picker
           selectedValue={selectedValue}
           onValueChange={onValueChange}
-          style={styles.picker} 
+          style={styles.picker}
           enabled={enabled}
         >
           <Picker.Item label="Seleccione..." value="" />
@@ -151,13 +150,9 @@ export default function EditarClienteView() {
     creadoPor,
     actualizadoEn,
     actualizadoPor,
-    isConfirmVisible,
-    isSuccessVisible,
+    // Estados y manejadores de modal eliminados
     handleBuscarCliente,
     handleGuardarPress,
-    handleCancelarGuardado,
-    handleConfirmarGuardado,
-    handleCerrarExito,
   } = useFormLogic();
 
   return (
@@ -185,9 +180,7 @@ export default function EditarClienteView() {
       {/* --- Formulario con Scroll --- */}
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
-        // --- CORRECCIÓN AQUÍ ---
-        // Se elimina la propiedad 'pointerEvents' para permitir
-        // el scroll en todo momento.
+        // Scroll siempre habilitado
       >
         {/* --- ID (Bloqueado) --- */}
         <LockedInput label="ID de Cliente:" value={idCliente} />
@@ -305,12 +298,12 @@ export default function EditarClienteView() {
           <Text style={styles.inputLabel}>Descripción:</Text>
           <View
             style={[
-              styles.multilineInputWrapper, 
+              styles.multilineInputWrapper,
               isFormLocked && styles.disabledInput,
             ]}
           >
             <TextInput
-              style={styles.multilineInput} 
+              style={styles.multilineInput}
               value={descripcion}
               onChangeText={setDescripcion}
               placeholder="Breve descripción del cliente..."
@@ -321,7 +314,7 @@ export default function EditarClienteView() {
             {isFormLocked && (
               <Image
                 source={require("../../../assets/1.png")} // Asumiendo que 1.png es tu candado
-                style={styles.multilineLockIcon} 
+                style={styles.multilineLockIcon}
               />
             )}
           </View>
@@ -342,75 +335,18 @@ export default function EditarClienteView() {
           <Text style={styles.saveButtonText}>Guardar</Text>
         </TouchableOpacity>
       </ScrollView>
-
-      {/* --- Modales (Sin cambios) --- */}
-      <Modal visible={isConfirmVisible} transparent={true} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalText}>
-              ¿Esta seguro que desea editar al cliente?
-            </Text>
-            <View style={styles.modalButtonRow}>
-              <TouchableOpacity
-                style={[
-                  styles.modalButtonBase,
-                  styles.modalButtonRowItem,
-                  styles.modalButtonCancel,
-                ]}
-                onPress={handleCancelarGuardado}
-              >
-                <Text style={styles.modalButtonTextCancel}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalButtonBase,
-                  styles.modalButtonRowItem,
-                  styles.modalButtonConfirm,
-                ]}
-                onPress={handleConfirmarGuardado}
-              >
-                <Text style={styles.modalButtonTextConfirm}>Confirmar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={isSuccessVisible} transparent={true} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
-            <Image
-              source={require("../../../assets/1.png")} // Asumiendo que 1.png es tu icono de éxito
-              style={styles.successIcon}
-            />
-            <Text style={[styles.modalText, { marginTop: 15 }]}>
-              Cliente editado correctamente.
-            </Text>
-            <TouchableOpacity
-              style={[
-                styles.modalButtonBase,
-                styles.modalButtonWide,
-                styles.modalButtonConfirm,
-              ]}
-              onPress={handleCerrarExito}
-            >
-              <Text style={styles.modalButtonTextConfirm}>Aceptar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
 
 // --- Estilos ---
-// (Los estilos son idénticos al código que proporcionaste)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F0F2F5",
-    paddingTop: 60,
+    paddingTop: 60, // <-- Valor original
   },
+  // --- Header ---
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -435,12 +371,14 @@ const styles = StyleSheet.create({
     color: "#555",
     marginLeft: 15,
   },
+  // --- Divider ---
   divider: {
     width: "100%",
     height: 1,
     backgroundColor: "#BDC3C7",
     marginTop: 15,
   },
+  // --- Search Bar ---
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -451,11 +389,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 20,
     marginBottom: 10,
+    height: 50, // <-- Altura normalizada
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
+    paddingHorizontal: 15, // <-- paddingVertical eliminado
     fontSize: 16,
     color: "#333",
   },
@@ -468,6 +406,7 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     tintColor: "#555",
   },
+  // --- Form ---
   scrollContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
@@ -482,6 +421,7 @@ const styles = StyleSheet.create({
     color: "#34495E",
     marginBottom: 6,
   },
+  // --- Input Styles (Normalizados) ---
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -489,11 +429,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#BDC3C7",
     borderRadius: 8,
+    height: 50, // <-- Altura normalizada
   },
   textInputInternal: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
+    paddingHorizontal: 15, // <-- paddingVertical eliminado
     fontSize: 16,
     color: "#333",
   },
@@ -501,6 +441,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0E0E0",
     color: "#777",
   },
+  // --- Multiline Styles ---
   multilineInputWrapper: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
@@ -524,6 +465,7 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     tintColor: "#777",
   },
+  // --- Locked Input Styles ---
   lockedInputView: {
     flexDirection: "row",
     alignItems: "center",
@@ -531,11 +473,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#BDC3C7",
     borderRadius: 8,
+    height: 50, // <-- Altura normalizada
   },
   lockedTextInput: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
+    paddingHorizontal: 15, // <-- paddingVertical eliminado
     fontSize: 16,
     color: "#555",
     fontWeight: "600",
@@ -547,20 +489,23 @@ const styles = StyleSheet.create({
     tintColor: "#777",
     marginHorizontal: 15,
   },
+  // --- Picker Styles ---
   pickerContainer: {
-    flexDirection: "row", 
-    alignItems: "center", 
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#BDC3C7",
     borderRadius: 8,
     justifyContent: "center",
+    height: 50, // <-- Altura normalizada
   },
   picker: {
-    flex: 1, 
-    height: 50,
+    flex: 1,
+    // height: 50, <-- Eliminado
     color: "#333",
   },
+  // --- Save Button ---
   saveButton: {
     backgroundColor: "#3498DB",
     borderRadius: 8,
@@ -574,71 +519,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: "bold",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalView: {
-    width: "85%",
-    backgroundColor: "white",
-    borderRadius: 15,
-    padding: 20,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    maxHeight: "80%",
-  },
-  modalText: {
-    fontSize: 18,
-    fontWeight: "500",
-    textAlign: "center",
-    marginBottom: 25,
-  },
-  successIcon: {
-    width: 50,
-    height: 50,
-    resizeMode: "contain",
-  },
-  modalButtonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  modalButtonBase: {
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  modalButtonRowItem: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  modalButtonWide: {
-    width: "100%",
-  },
-  modalButtonCancel: {
-    backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderColor: "#E74C3C",
-  },
-  modalButtonTextCancel: {
-    color: "#E74C3C",
-    fontWeight: "bold",
-  },
-  modalButtonConfirm: {
-    backgroundColor: "#27AE60",
-  },
-  modalButtonTextConfirm: {
-    color: "white",
     fontWeight: "bold",
   },
 });
