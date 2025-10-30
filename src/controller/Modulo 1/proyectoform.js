@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-// Hook personalizado para manejar la lógica del formulario Proyecto
+
 export function useProyectoLogic(initialProyecto = {}) {
   const [idProyecto] = useState(initialProyecto.idProyecto || "");
   const [nombreProyecto, setNombreProyecto] = useState(
@@ -27,7 +27,7 @@ export function useProyectoLogic(initialProyecto = {}) {
   );
 
   const handleGuardar = useCallback(() => {
-    // Aquí puedes agregar validaciones o integración con API
+    
     const proyectoData = {
       idProyecto,
       nombreProyecto,

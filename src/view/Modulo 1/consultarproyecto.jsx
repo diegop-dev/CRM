@@ -1,17 +1,13 @@
-// 📂 src/view/Modulo 1/editarproyecto.jsx
+// src/view/Modulo 1/consultarproyecto.jsx
 import React from "react";
 import { ScrollView, StyleSheet, View, Text, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getProyectoForm } from "../../controller/Modulo 1/editarproyecto";
+import ConsultarProyecto from "../../controller/Modulo 1/consultarproyecto";
 
-export default function ConsultarProyectoView() {
-  // Se obtiene el formulario desde la lógica
-  const formulario = getProyectoForm({}, "editar");
-
+export default function ConsultarProyectoView({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* 🔹 Encabezado */}
         <View style={styles.header}>
           <Image
             source={require("../../../assets/1.png")}
@@ -22,8 +18,7 @@ export default function ConsultarProyectoView() {
 
         <View style={styles.divider} />
 
-        {/* 🔹 Formulario de búsqueda y edición */}
-        {formulario}
+        <ConsultarProyecto navigation={navigation} />
       </ScrollView>
     </SafeAreaView>
   );

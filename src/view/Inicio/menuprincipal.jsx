@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     resizeMode: "contain",
-    tintColor: "#3498DB",
+   
   },
   headerTitle: {
     fontSize: 26,
