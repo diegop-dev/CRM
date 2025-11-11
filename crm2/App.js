@@ -21,6 +21,12 @@ import AgregarEmpleadoView from "./src/view/Modulo 2/SubModulos/Empleados/agrega
 import EditarEmpleadoView from "./src/view/Modulo 2/SubModulos/Empleados/editarempleado.jsx";
 import EmpleadosFormView from "./src/view/Modulo 2/SubModulos/Empleados/empleadosform.jsx";
 import ConsultarEmpleadoView from "./src/view/Modulo 2/SubModulos/Empleados/consultarempleado.jsx";
+import MenuDeFacturasView from "./src/view/Modulo 2/SubModulos/Facturas/menudefacturas.jsx";
+import AgregarFacturaView from "./src/view/Modulo 2/SubModulos/Facturas/agregarfactura.jsx";
+import EditarFacturaView from "./src/view/Modulo 2/SubModulos/Facturas/editarfactura.jsx";
+import FacturaFormView from "./src/view/Modulo 2/SubModulos/Facturas/facturasform.jsx";
+import ConsultarFacturaView from "./src/view/Modulo 2/SubModulos/Facturas/consultarfactura.jsx"; 
+
 
 import MenuDeJCFView from "./src/view/Modulo 2/SubModulos/JCF/menudejcf.jsx";
 import MenuDeInventarioView from "./src/view/Modulo 2/SubModulos/Inventario/menudeinventario.jsx";
@@ -28,7 +34,7 @@ import AgregarProductoView from "./src/view/Modulo 2/SubModulos/Inventario/agreg
 import EditarProductoView from "./src/view/Modulo 2/SubModulos/Inventario/editarproducto.jsx";
 import ProductosFormView from "./src/view/Modulo 2/SubModulos/Inventario/productosform.jsx";
 import ConsultarProductoView from "./src/view/Modulo 2/SubModulos/Inventario/consultarproducto.jsx";
-import MenuDeFacturasView from "./src/view/Modulo 2/SubModulos/Facturas/menudefacturas.jsx";
+
 import MenuDeDocumentosView from "./src/view/Modulo 2/SubModulos/Documentos/menudedocumentos.jsx";
 
 import MenuGestionDeClientesView from "./src/view/Modulo 3/menugestiondeclientes.jsx";
@@ -135,6 +141,10 @@ export default function App() {
           <Stack.Screen name="EditarEmpleado" component={EditarEmpleadoView} />
           <Stack.Screen name="ConsultarEmpleado" component={ConsultarEmpleadoView} />
           <Stack.Screen name="EmpleadosForm" component={EmpleadosFormView} />
+          <Stack.Screen name="AgregarFactura" component={AgregarFacturaView} />
+          <Stack.Screen name="EditarFactura" component={EditarFacturaView} />
+          <Stack.Screen name="FacturaForm" component={FacturaFormView} />
+          <Stack.Screen name="ConsultarFactura" component={ConsultarFacturaView} />
           <Stack.Screen name="MenuDeJCF" component={MenuDeJCFView} />
           <Stack.Screen name="MenuDeInventario" component={MenuDeInventarioView} />
           <Stack.Screen name="AgregarProducto" component={AgregarProductoView} />
