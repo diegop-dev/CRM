@@ -1,0 +1,556 @@
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Modal,
+  Pressable,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+// --- CONSTANTES ---
+// (Eliminadas: DIAS, MESES, AÑOS, SEXO, ROL)
+// (Añadidas: CATEGORIA, MONEDA)
+const CATEGORIA_DATA = ["Consultoría", "Marketing", "Ingeniería"];
+const MONEDA_DATA = ["MXN", "USD"];
+const ESTADO_DATA = ["Activo", "Inactivo"]; // Esta se mantiene igual
+
+const ITEM_HEIGHT = 44;
+const CONTAINER_HEIGHT = 220;
+const WHEEL_PADDING = (CONTAINER_HEIGHT - ITEM_HEIGHT) / 2;
+
+
+// --- Componentes reutilizables ---
+// (No necesitan cambios)
+const FormInput = React.memo(
+  ({ label, value, onChangeText, editable = true, multiline = false, onTouchDisabled, ...props }) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.inputLabel}>{label}</Text>
+      <TouchableOpacity
+        activeOpacity={editable ? 1 : 0.8}
+        onPress={!editable ? onTouchDisabled : undefined}
+      >
+        <TextInput
+          style={[
+            styles.textInput,
+            multiline && styles.multilineInput,
+            !editable && { backgroundColor: "#FFFFFF" },
+          ]}
+          value={value}
+          onChangeText={onChangeText}
+          editable={editable}
+          multiline={multiline}
+          textAlignVertical={multiline ? "top" : "center"}
+          blurOnSubmit={false}
+          {...props}
+        />
+      </TouchableOpacity>
+    </View>
+  )
+);
+
+const SelectInput = React.memo(({ label, value, onPress, editable = true, onTouchDisabled }) => (
+  <TouchableOpacity onPress={editable ? onPress : onTouchDisabled} activeOpacity={editable ? 0.8 : 0.7}>
+    <View style={styles.inputContainer}>
+      <Text style={styles.inputLabel}>{label}</Text>
+      <View
+        style={[
+          styles.textInput,
+          { justifyContent: "center" },
+          !editable && { backgroundColor: "#FFFFFF" },
+        ]}
+      >
+        <Text style={value ? styles.textInput_value : styles.textInput_placeholder}>
+          {value || "Seleccione..."}
+        </Text>
+      </View>
+    </View>
+  </TouchableOpacity>
+));
+
+
+// --- Paso 1 ---
+// CAMBIOS: Adaptado a los campos del wireframe 1
+const Paso1 = React.memo(({ servicio, onChange, editable, onTouchDisabled, onCategoriaPress }) => (
+  <>
+    {/* ID de Servicio eliminado según instrucción */}
+    <FormInput label="Nombre del Servicio" value={servicio.nombreServicio} onChangeText={(val) => onChange('nombreServicio', val)} editable={editable} onTouchDisabled={onTouchDisabled} />
+    <FormInput label="Descripción" value={servicio.descripcion} onChangeText={(val) => onChange('descripcion', val)} editable={editable} onTouchDisabled={onTouchDisabled} multiline />
+    <SelectInput label="Categoría" value={servicio.categoria} onPress={onCategoriaPress} editable={editable} onTouchDisabled={onTouchDisabled} />
+    <FormInput 
+      label="Precio" 
+      value={servicio.precio} 
+      onChangeText={(val) => onChange('precio', val)} 
+      editable={editable} 
+      onTouchDisabled={onTouchDisabled} 
+      keyboardType="numeric"
+    />
+  </>
+));
+
+// --- Paso 2 ---
+// CAMBIOS: Adaptado a los campos del wireframe 2
+// (Se fusiona la lógica del "Paso 3" original, como el botón de guardar)
+const Paso2 = React.memo(({ servicio, onChange, onGuardar, editable, modo, onTouchDisabled, onMonedaPress, onEstadoPress, onResponsablePress }) => (
+  <>
+    <SelectInput label="Moneda" value={servicio.moneda} onPress={onMonedaPress} editable={editable} onTouchDisabled={onTouchDisabled} />
+    <FormInput label="Duración Estimada" value={servicio.duracionEstimada} onChangeText={(val) => onChange('duracionEstimada', val)} editable={editable} onTouchDisabled={onTouchDisabled} />
+    <SelectInput label="Estado" value={servicio.estado} onPress={onEstadoPress} editable={editable} onTouchDisabled={onTouchDisabled} />
+    
+    {/* CAMPO RESPONSABLE (lógica de ProyectoFormView.jsx) */}
+    <SelectInput 
+      label="ID de Responsable" 
+      value={servicio.responsableNombre || ""} // Mostramos nombre
+      onPress={onResponsablePress} 
+      editable={editable} 
+      onTouchDisabled={onTouchDisabled} 
+    />
+
+    <FormInput label="Notas Internas" value={servicio.notasInternas} onChangeText={(val) => onChange('notasInternas', val)} editable={editable} onTouchDisabled={onTouchDisabled} multiline />
+
+    {editable && (
+      <TouchableOpacity style={styles.saveButton} onPress={onGuardar}>
+        <Text style={styles.saveButtonText}>
+          {modo === "editar" ? "Guardar Cambios" : "Guardar Servicio"}
+        </Text>
+      </TouchableOpacity>
+    )}
+  </>
+));
+
+// --- Componente de Picker en JS ---
+const JSPickerItem = ({ label }) => (
+  <View style={styles.pickerItem}>
+    <Text style={styles.pickerItemText}>
+      {label}
+    </Text>
+  </View>
+);
+
+// --- Componente de Rueda Selectora ---
+const TumblerWheel = ({ data, onValueChange, value }) => {
+  const ref = React.useRef(null);
+  let initialIndex = data.indexOf(value);
+  if (initialIndex < 0) initialIndex = 0;
+  const initialOffset = initialIndex * ITEM_HEIGHT;
+
+  const handleScrollEnd = (e) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const index = Math.round(y / ITEM_HEIGHT);
+    if (index >= 0 && index < data.length) {
+      const newValue = data[index];
+      onValueChange(newValue);
+    }
+  };
+
+  return (
+    <ScrollView
+      ref={ref}
+      style={styles.jsDatePickerColumn}
+      showsVerticalScrollIndicator={false}
+      snapToInterval={ITEM_HEIGHT}
+      decelerationRate="fast"
+      contentOffset={{ y: initialOffset }}
+      contentContainerStyle={{ 
+        paddingTop: WHEEL_PADDING, 
+        paddingBottom: WHEEL_PADDING
+      }}
+      onMomentumScrollEnd={handleScrollEnd}
+      onScrollEndDrag={handleScrollEnd}
+    >
+      {data.map((item, index) => <JSPickerItem key={`${item}_${index}`} label={item} />)}
+    </ScrollView>
+  );
+};
+
+
+// --- Principal ---
+// CAMBIOS:
+// - Renombrado a 'ServiciosFormView'.
+// - Prop 'empleado' -> 'servicio'.
+// - Se añade prop 'empleados = []' (para el selector de responsable).
+// - Se reducen los pasos a 2.
+// - Se actualizan los modales a Categoria, Moneda, Estado y Responsable.
+export default function ServiciosFormView({ 
+  servicio = {}, 
+  modo = "agregar", 
+  onTouchDisabled, 
+  onChange, 
+  onGuardar,
+  empleados = [] // <--- LÓGICA AÑADIDA DE PROYECTOFORMVIEW
+}) {
+  const [step, setStep] = useState(1);
+  const editable = modo !== "consultar";
+
+  // CAMBIO: Estados de Modales actualizados
+  const [showCategoriaModal, setShowCategoriaModal] = useState(false);
+  const [showMonedaModal, setShowMonedaModal] = useState(false);
+  const [showEstadoModal, setShowEstadoModal] = useState(false);
+  const [showResponsableModal, setShowResponsableModal] = useState(false); // <--- LÓGICA AÑADIDA
+
+  // CAMBIO: Estados Temporales actualizados
+  const [tempCategoria, setTempCategoria] = useState('');
+  const [tempMoneda, setTempMoneda] = useState('');
+  const [tempEstado, setTempEstado] = useState('');
+  const [tempResponsable, setTempResponsable] = useState(null); // <--- LÓGICA AÑADIDA
+
+  // --- LÓGICA DEL PICKER DE RESPONSABLE (de ProyectoFormView.jsx) ---
+  const RESPONSABLE_DATA = empleados.map(emp => ({
+    label: `${emp.nombres} ${emp.apellido_paterno}`, // Asumiendo estructura de empleado
+    value: emp.id_empleado
+  }));
+  const RESPONSABLE_LABELS = RESPONSABLE_DATA.map(r => r.label);
+  // --- FIN LÓGICA RESPONSABLE ---
+
+  // CAMBIO: Funciones openModal actualizadas
+  const openCategoriaModal = () => {
+    setTempCategoria(servicio.categoria || CATEGORIA_DATA[0]);
+    setShowCategoriaModal(true);
+  };
+
+  const openMonedaModal = () => {
+    setTempMoneda(servicio.moneda || MONEDA_DATA[0]);
+    setShowMonedaModal(true);
+  };
+
+  const openEstadoModal = () => {
+    setTempEstado(servicio.estado || ESTADO_DATA[0]);
+    setShowEstadoModal(true);
+  };
+
+  // --- LÓGICA openResponsableModal (de ProyectoFormView.jsx) ---
+  const openResponsableModal = () => {
+    const currentLabel = servicio.responsableNombre || (RESPONSABLE_LABELS.length > 0 ? RESPONSABLE_LABELS[0] : '');
+    const currentValue = servicio.idResponsable || (RESPONSABLE_DATA.length > 0 ? RESPONSABLE_DATA[0].value : '');
+    setTempResponsable({ label: currentLabel, value: currentValue });
+    setShowResponsableModal(true);
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-start", paddingHorizontal: 20 }}
+      >
+        {step === 1 && (
+          <Paso1
+            servicio={servicio}
+            onChange={onChange}
+            editable={editable}
+            onTouchDisabled={onTouchDisabled}
+            onCategoriaPress={() => (editable ? openCategoriaModal() : onTouchDisabled())}
+          />
+        )}
+
+        {/* CAMBIO: Ahora usamos Paso2 */}
+        {step === 2 && (
+          <Paso2 
+            servicio={servicio}
+            onChange={onChange}
+            onGuardar={onGuardar}
+            editable={editable} 
+            modo={modo}
+            onTouchDisabled={onTouchDisabled} 
+            onMonedaPress={() => (editable ? openMonedaModal() : onTouchDisabled())}
+            onEstadoPress={() => (editable ? openEstadoModal() : onTouchDisabled())}
+            onResponsablePress={() => (editable ? openResponsableModal() : onTouchDisabled())} // <--- LÓGICA AÑADIDA
+          />
+        )}
+        
+        {/* (Paso 3 eliminado) */}
+
+        <View style={styles.buttonRow}>
+          {step > 1 && (
+            <TouchableOpacity style={[styles.navButton, styles.backButton]} onPress={() => setStep(step - 1)}>
+              <Text style={styles.navButtonText}>Regresar</Text>
+            </TouchableOpacity>
+          )}
+          {/* CAMBIO: < 3 a < 2 */}
+          {step < 2 && (
+            <TouchableOpacity style={[styles.navButton, styles.nextButton]} onPress={() => setStep(step + 1)}>
+              <Text style={styles.navButtonText}>Continuar</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </ScrollView>
+
+      {/* --- MODALES --- */}
+
+      {/* Modal de Categoria (AÑADIDO) */}
+      <Modal
+        visible={showCategoriaModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCategoriaModal(false)}
+      >
+        <Pressable style={styles.pickerBackdrop} onPress={() => setShowCategoriaModal(false)} />
+        <View style={styles.pickerSheet}>
+          <View style={styles.pickerHeader}>
+            <TouchableOpacity onPress={() => {
+              onChange('categoria', tempCategoria);
+              setShowCategoriaModal(false);
+            }}>
+              <Text style={styles.pickerButtonText}>Hecho</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.jsPickerContainer}>
+            <TumblerWheel data={CATEGORIA_DATA} onValueChange={setTempCategoria} value={tempCategoria} />
+            <View style={styles.pickerHighlight} pointerEvents="none" />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Moneda (AÑADIDO) */}
+      <Modal
+        visible={showMonedaModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowMonedaModal(false)}
+      >
+        <Pressable style={styles.pickerBackdrop} onPress={() => setShowMonedaModal(false)} />
+        <View style={styles.pickerSheet}>
+          <View style={styles.pickerHeader}>
+            <TouchableOpacity onPress={() => {
+              onChange('moneda', tempMoneda);
+              setShowMonedaModal(false);
+            }}>
+              <Text style={styles.pickerButtonText}>Hecho</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.jsPickerContainer}>
+            <TumblerWheel data={MONEDA_DATA} onValueChange={setTempMoneda} value={tempMoneda} />
+            <View style={styles.pickerHighlight} pointerEvents="none" />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Estado (MANTENIDO) */}
+      <Modal
+        visible={showEstadoModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowEstadoModal(false)}
+      >
+        <Pressable style={styles.pickerBackdrop} onPress={() => setShowEstadoModal(false)} />
+        <View style={styles.pickerSheet}>
+          <View style={styles.pickerHeader}>
+            <TouchableOpacity onPress={() => {
+              onChange('estado', tempEstado); // 'estadoEmpleado' -> 'estado'
+              setShowEstadoModal(false);
+            }}>
+              <Text style={styles.pickerButtonText}>Hecho</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.jsPickerContainer}>
+            <TumblerWheel data={ESTADO_DATA} onValueChange={setTempEstado} value={tempEstado} />
+            <View style={styles.pickerHighlight} pointerEvents="none" />
+          </View>
+        </View>
+      </Modal>
+      
+      {/* --- MODAL RESPONSABLE (de ProyectoFormView.jsx) --- */}
+      <Modal visible={showResponsableModal} animationType="slide" transparent={true} onRequestClose={() => setShowResponsableModal(false)}>
+        <Pressable style={styles.pickerBackdrop} onPress={() => setShowResponsableModal(false)} />
+        <View style={styles.pickerSheet}>
+          <View style={styles.pickerHeader}>
+            <TouchableOpacity onPress={() => {
+              const selectedLabel = tempResponsable ? tempResponsable.label : RESPONSABLE_LABELS[0];
+              const selectedData = RESPONSABLE_DATA.find(r => r.label === selectedLabel) || (RESPONSABLE_DATA.length > 0 ? RESPONSABLE_DATA[0] : {value: '', label: ''});
+              
+              onChange('idResponsable', selectedData.value); // Guardamos el ID
+              onChange('responsableNombre', selectedData.label); // Guardamos el Nombre para mostrar
+              setShowResponsableModal(false);
+            }}>
+              <Text style={styles.pickerButtonText}>Hecho</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.jsPickerContainer}>
+            <TumblerWheel 
+              data={RESPONSABLE_LABELS} 
+              onValueChange={(label) => setTempResponsable({ ...tempResponsable, label })} 
+              value={tempResponsable ? tempResponsable.label : ''} 
+            />
+            <View style={styles.pickerHighlight} pointerEvents="none" />
+          </View>
+        </View>
+      </Modal>
+
+    </SafeAreaView>
+  );
+}
+
+// --- Estilos ---
+// (Tus estilos se quedan igual)
+const styles = StyleSheet.create({
+  inputContainer: { marginBottom: 20 },
+  inputLabel: { fontSize: 14, fontWeight: "600", color: "#ec0c0cff", marginBottom: 10 },
+  textInput: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#BDC3C7",
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 25,
+    fontSize: 16,
+    color: '#333',
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  textInput_value: {
+    color: '#333',
+    fontSize: 16,
+  },
+  textInput_placeholder: {
+    color: '#999',
+    fontSize: 16,
+  },
+  multilineInput: { 
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  navButton: {
+    flex: 1,
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
+  backButton: { backgroundColor: "#77a7ab" },
+  nextButton: { backgroundColor: "#006480" },
+  navButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  buttonRow: { flexDirection: "row", marginTop: 15, marginBottom: 30 },
+  saveButton: { backgroundColor: "#006480", borderRadius: 25, paddingVertical: 12, paddingHorizontal: 15, alignItems: "center", marginTop: 10 },
+  saveButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  alertBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  alertContainer: {
+    backgroundColor: "#FFFFFF",
+    width: "75%",
+    maxWidth: 300,
+    borderRadius: 14,
+    overflow: 'hidden',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+  },
+  alertTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+    color: "#000",
+    paddingTop: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 5,
+  },
+  alertMessage: {
+    fontSize: 14,
+    fontWeight: "400",
+    textAlign: "center",
+    color: "#000",
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  alertButtonContainer: {
+    borderTopWidth: 0.5,
+    borderColor: "rgba(0, 0, 0, 0.3)",
+    flexDirection: 'row',
+  },
+  alertButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  alertButtonText: {
+    fontSize: 17,
+    color: "#007AFF",
+    fontWeight: "600",
+  },
+  pickerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+  pickerSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 30,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: -3 },
+    shadowRadius: 5,
+  },
+  pickerHeader: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderColor: '#CCC',
+    alignItems: 'flex-end',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  pickerButtonText: {
+    fontSize: 16,
+    color: "#007AFF",
+    fontWeight: "500",
+  },
+  jsPickerContainer: {
+    height: CONTAINER_HEIGHT,
+    position: 'relative',
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+  },
+  jsDatePickerContainer: {
+    flexDirection: "row",
+    height: CONTAINER_HEIGHT,
+    backgroundColor: '#FFFFFF',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  jsDatePickerColumn: {
+    flex: 1,
+    height: CONTAINER_HEIGHT,
+  },
+  pickerItem: {
+    height: ITEM_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pickerItemText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  pickerHighlight: {
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    position: 'absolute',
+    top: '50%',
+    left: 10,
+    right: 10,
+    height: ITEM_HEIGHT,
+    marginTop: -ITEM_HEIGHT / 2,
+    backgroundColor: 'rgba(77, 77, 77, 0.05)',
+  },
+});
