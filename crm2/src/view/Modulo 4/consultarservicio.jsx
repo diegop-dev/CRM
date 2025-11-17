@@ -1,195 +1,378 @@
-import React from "react";
+import React, { useState } from "react"; // <-- Importamos useState
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Image,
-  ActivityIndicator,
-  Alert,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Image,
+  ActivityIndicator,
+  Modal, // <-- Importamos Modal
+  Pressable, // <-- Importamos Pressable
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-// CAMBIO: Se importa el formulario de Servicios
-import ServiciosFormView from "../../view/Modulo 4/serviciosform"; // Ajusta esta ruta
-// CAMBIO: Se importa el (futuro) hook de lógica para consultar servicio
-import { useConsultarServicioLogic } from "../../controller/Modulo 4/consultarservicio"; // Ajusta esta ruta
+import ServiciosFormView from "../../view/Modulo 4/serviciosform"; 
+import { useConsultarServicioLogic } from "../../controller/Modulo 4/consultarservicio"; 
 
-// CAMBIO: Renombrado el componente
 export default function ConsultarServicioView() {
-  const navigation = useNavigation();
+  const navigation = useNavigation();
 
-  // CAMBIO: Variables desestructuradas del nuevo hook
-  const {
-    terminoBusqueda,     // 'nombreUsuario' -> 'terminoBusqueda'
-    setTerminoBusqueda,  // 'setNombreUsuario' -> 'setTerminoBusqueda'
-    servicio,            // 'empleado' -> 'servicio'
-    empleadosList,       // <-- AÑADIDO: Necesario para el dropdown de Responsable
-    loading,
-    editable,
-    buscarServicio,        // 'buscarEmpleado' -> 'buscarServicio'
-    deseleccionarServicio, // 'deseleccionarEmpleado' -> 'deseleccionarServicio'
-  } = useConsultarServicioLogic();
+  const {
+    terminoBusqueda,
+    setTerminoBusqueda,
+    servicio,
+    empleadosList, 
+    loading,
+    editable,
+    buscarServicio,
+    deseleccionarServicio,
+    modalInfo, // <-- Obtenemos el estado del modal
+    closeModal, // <-- Obtenemos la función de cierre
+  } = useConsultarServicioLogic();
 
+  // --- Estados del Modal de Navegación ---
+  const [isNavModalVisible, setNavModalVisible] = useState(false);
+  const [modalStep, setModalStep] = useState(1); 
 
-  const handleTouchDisabled = () => {
-    // CAMBIO: Verificación de 'servicio'
-    if (!editable && servicio) {
-      Alert.alert(
-        "Modo consulta",
-        // CAMBIO: Texto actualizado
-        "¿Desea editar este servicio?",
-        [
-          { text: "No", style: "cancel" },
-          {
-            text: "Sí",
-            onPress: () => {
-              Alert.alert(
-                "Área segura",
-                // CAMBIO: Texto actualizado
-                "¿Desea ser dirigido al área segura para editar servicio?",
-                [
-                  { text: "Cancelar", style: "cancel" },
-                  {
-                    text: "Confirmar",
-                    onPress: () => {
-                      // CAMBIO: Navegación a 'EditarServicio' pasando 'servicio'
-                      navigation.navigate("EditarServicio", { servicio });
-                    },
-                  },
-                ]
-              );
-            },
-          },
-        ],
-        { cancelable: true }
-      );
-    }
+  // --- Handlers del Modal de Navegación ---
+  const handleModalCancel = () => {
+    setNavModalVisible(false);
+  };
+  const handleModalConfirmStep1 = () => {
+    setModalStep(2); 
+  };
+  const handleModalConfirmStep2 = () => {
+    navigation.navigate("EditarServicio", { servicio });
+    setNavModalVisible(false);
   };
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* 🔹 Encabezado */}
-        <View style={styles.header}>
-          <Image
-            source={require("../../../assets/LOGO_BLANCO.png")}
-            style={styles.headerIcon}
-          />
-          {/* CAMBIO: Título actualizado */}
-          <Text style={styles.headerTitle}>Consultar Servicio</Text>
+  const handleTouchDisabled = () => {
+    if (!editable && servicio) {
+      // --- CAMBIO: Abre el modal de navegación ---
+      setModalStep(1);
+      setNavModalVisible(true);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={styles.scrollContainer}
+      >
+        {/* 🔹 Encabezado */}
+        <View style={styles.header}>
+          <Image
+            source={require("../../../assets/LOGO_BLANCO.png")}
+            style={styles.headerIcon}
+          />
+          <Text style={styles.headerTitle}>Consultar Servicio</Text>
+        </View>
+
+        <View style={styles.divider} />
+
+        {/* 🔹 Contenedor principal para centrar */}
+        <View style={styles.mainContentArea}>
+          {!servicio && (
+            <>
+              <Text style={styles.label}>Buscar por nombre de servicio:</Text>
+              <View style={styles.searchBox}>
+                <TextInput
+                  style={styles.searchInput} // <-- ESTILO ACTUALIZADO
+                  placeholder="Ejemplo: Consultoría de Marketing"
+                  placeholderTextColor="#999" // <-- Placeholder
+                  value={terminoBusqueda}
+                  onChangeText={setTerminoBusqueda}
+                />
+                <TouchableOpacity
+                  style={[styles.searchButton, loading && { opacity: 0.6 }]} // <-- ESTILO ACTUALIZADO
+                  onPress={buscarServicio}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.searchButtonText}>Buscar</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          {servicio && (
+            <View style={styles.resultContainer}> {/* <-- ESTILO ACTUALIZADO */}
+              <TouchableOpacity
+                onPress={deseleccionarServicio}
+                style={styles.regresarButton}
+              >
+                <Text style={styles.regresarButtonText}>{"< Volver a la búsqueda"}</Text>
+              </TouchableOpacity>
+              <Text style={styles.resultTitle}>Datos del Servicio</Text>
+              <ServiciosFormView
+                modo="consultar"
+                servicio={servicio}
+                onTouchDisabled={handleTouchDisabled}
+                empleados={empleadosList} 
+              />
+            </View>
+          )}
         </View>
+      </ScrollView>
 
-        <View style={styles.divider} />
-
-        {/* 🔹 Ocultamos búsqueda si ya hay servicio */}
-        {/* CAMBIO: 'empleado' -> 'servicio' */}
-        {!servicio && (
-          <>
-            {/* CAMBIO: Texto actualizado */}
-            <Text style={styles.label}>Buscar por nombre de servicio:</Text>
-            <View style={styles.searchBox}>
-              <TextInput
-                style={styles.input}
-                // CAMBIO: Placeholder actualizado
-                placeholder="Ejemplo: Consultoría de Marketing"
-                // CAMBIO: Estado actualizado
-                value={terminoBusqueda}
-                onChangeText={setTerminoBusqueda}
-              />
-              <TouchableOpacity
-                style={[styles.button, loading && { opacity: 0.6 }]}
-                // CAMBIO: 'buscarEmpleado' -> 'buscarServicio'
-                onPress={buscarServicio}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Buscar</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-
-        {/* 🔹 Mostrar resultados */}
-        {/* CAMBIO: 'empleado' -> 'servicio' */}
-        {servicio && (
-          <View style={styles.resultContainer}>
-
-            {/* --- Botón Volver --- */}
+      {/* --- MODAL DE ALERTA DE BÚSQUEDA --- */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalInfo.visible}
+        onRequestClose={closeModal}
+      >
+        <Pressable style={styles.pickerBackdrop} onPress={closeModal} />
+        <View style={styles.alertModalContainer}>
+          <Text style={styles.modalTitle}>{modalInfo.title}</Text>
+          <Text style={styles.modalMessage}>{modalInfo.message}</Text>
+          <View style={styles.modalButtonContainer}>
             <TouchableOpacity
-              // CAMBIO: 'deseleccionarEmpleado' -> 'deseleccionarServicio'
-              onPress={deseleccionarServicio}
-              style={styles.regresarButton}
+              style={[styles.modalButton, styles.modalButtonConfirm, { width: '100%' }]}
+              onPress={closeModal}
             >
-              <Text style={styles.regresarButtonText}>{"< Volver a la búsqueda"}</Text>
+              <Text style={styles.modalButtonText}>Aceptar</Text>
             </TouchableOpacity>
-            {/* --- FIN BOTÓN VOLVER --- */}
-
-            {/* CAMBIO: Título actualizado */}
-            <Text style={styles.resultTitle}>Datos del Servicio</Text>
-
-            {/* CAMBIO: Se usa ClientesFormView */}
-            <ServiciosFormView
-              modo="consultar"
-              // CAMBIO: 'empleado' -> 'servicio'
-              servicio={servicio}
-              onTouchDisabled={handleTouchDisabled}
-              // <-- ¡CLAVE! Se pasa la lista de empleados
-              empleados={empleadosList} 
-            />
           </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
-  );
+        </View>
+      </Modal>
+      
+      {/* --- MODAL DE NAVEGACIÓN A EDITAR --- */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isNavModalVisible}
+        onRequestClose={handleModalCancel}
+      >
+        <Pressable style={styles.pickerBackdrop} onPress={handleModalCancel} />
+        <View style={styles.alertModalContainer}>
+          {modalStep === 1 ? (
+            <>
+              <Text style={styles.modalTitle}>Modo consulta</Text>
+              <Text style={styles.modalMessage}>¿Desea editar este servicio?</Text>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={handleModalCancel}
+                >
+                  <Text style={styles.modalButtonText}>No</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  onPress={handleModalConfirmStep1}
+                >
+                  <Text style={styles.modalButtonText}>Sí</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.modalTitle}>Área segura</Text>
+              <Text style={styles.modalMessage}>¿Desea ser dirigido al área segura para editar servicio?</Text>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={handleModalCancel}
+                >
+                  <Text style={styles.modalButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  onPress={handleModalConfirmStep2}
+                >
+                  <Text style={styles.modalButtonText}>Confirmar</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </View>
+      </Modal>
+
+      {/* --- BOTÓN FLOTANTE DE REGRESO --- */}
+      <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.backButtonText}>Regresar</Text>
+      </TouchableOpacity>
+
+    </SafeAreaView>
+  );
 }
 
 // Estilos 
-// (Sin cambios)
+// (ACTUALIZADOS AL TEMA OSCURO)
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#2b3042" },
-  scrollContainer: { padding: 20, flexGrow: 1, paddingHorizontal: 15, paddingTop: 5 },
-  header: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  headerIcon: { width: 60, height: 80, resizeMode: "contain", tintColor: "#ffffff" },
-  headerTitle: { fontSize: 25, fontWeight: "700", marginLeft: 15, color: "#ffffff" },
-  divider: { height: 3, backgroundColor: "#d92a1c", marginVertical: 1 },
-  label: { fontSize: 16, fontWeight: "600", color: "#ffffff", marginBottom: 15 },
-  searchBox: { flexDirection: "row", alignItems: "center", gap: 10 },
-  input: {
+  safeArea: { flex: 1, backgroundColor: "#2b3042" },
+  container: {
     flex: 1,
+  },
+  scrollContainer: { 
+    paddingTop: 5,
+    paddingBottom: 80, // Espacio para el botón flotante
+  },
+  header: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    marginBottom: 10,
+    paddingHorizontal: 15,
+  },
+  headerIcon: { 
+    width: 60, 
+    height: 80, 
+    resizeMode: "contain", 
+    tintColor: "#ffffff" 
+  },
+  headerTitle: { 
+    fontSize: 25, 
+    fontWeight: "700", 
+    marginLeft: 15, 
+    color: "#ffffff" 
+  },
+  divider: { 
+    height: 3, 
+    backgroundColor: "#d92a1c", 
+    marginVertical: 1,
+    marginBottom: 30,
+  },
+  mainContentArea: {
+    width: "100%",
+    maxWidth: 960,
+    alignSelf: "center",
+    paddingHorizontal: 15,
+  },
+  label: { 
+    fontSize: 16, 
+    fontWeight: "600", 
+    color: "#ffffff", 
+    marginBottom: 10 
+  },
+  searchBox: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    gap: 10 
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#BDC3C7",
     borderWidth: 1,
-    borderColor: "#D0D3D4",
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    padding: 10,
-  },
-  button: {
-    backgroundColor: "#006480",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-  buttonText: { color: "#fff", fontWeight: "600" },
-  resultContainer: {
-    backgroundColor: "#fff",
-    padding: 20,
     borderRadius: 12,
-    marginTop: 20,
-    elevation: 2,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    fontSize: 15,
+    color: "#333",
+  },
+  searchButton: {
+    backgroundColor: "#77a7ab",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+  },
+  buttonText: { color: "#fff", fontWeight: "600" },
+  resultContainer: {
+    backgroundColor: "#3a3f50", // <-- CAMBIO
+    padding: 20,
+    borderRadius: 12,
+    marginTop: 20,
+    elevation: 2,
+  },
+  resultTitle: { 
+    fontSize: 18, 
+    fontWeight: "700", 
+    marginBottom: 10,
+    color: "#ffffff", // <-- CAMBIO
   },
-  resultTitle: { fontSize: 18, fontWeight: "700", marginBottom: 10 },
-  regresarButton: {
-    marginBottom: 15,
-    alignSelf: 'flex-start',
+  regresarButton: {
+    marginBottom: 15,
+    alignSelf: 'flex-start',
+  },
+  regresarButtonText: {
+    fontSize: 16,
+    color: "#77a7ab", // <-- CAMBIO
+    fontWeight: '500',
+  },
+  // --- BOTÓN FLOTANTE AÑADIDO ---
+  backButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: '#77a7ab', 
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25, 
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 4,
   },
-  regresarButtonText: {
+  backButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
-    color: "#007AFF", // Azul tipo "link"
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+
+  // --- ESTILOS DEL MODAL FLOTANTE ---
+  pickerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+  },
+  alertModalContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -175 }, { translateY: -125 }], 
+    width: 350, 
+    backgroundColor: '#2b3042', 
+    borderRadius: 20,
+    padding: 20,
+    elevation: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#f0f0f0',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#f0f0f0',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    width: '48%',
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#6c757d', 
+  },
+  modalButtonConfirm: {
+    backgroundColor: '#77a7ab', 
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

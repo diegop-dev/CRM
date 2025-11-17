@@ -7,7 +7,8 @@ import ServiciosFormView from "../../view/Modulo 4/serviciosform"; // Ajusta est
 import { useAgregarServicioLogic } from "../../controller/Modulo 4/agregarservicio"; // Ajusta esta ruta
 
 // CAMBIO: Renombrado a 'AgregarServicioView'
-export default function AgregarServicioView() {
+// --- 1. RECIBE { navigation } ---
+export default function AgregarServicioView({ navigation }) {
 
   // CAMBIO: Usamos el nuevo hook.
   // Nota: Mantenemos 'empleadosList' porque 'ServiciosFormView' 
@@ -42,6 +43,8 @@ export default function AgregarServicioView() {
             onChange={onChange}
             onGuardar={onGuardar}
             empleados={empleadosList} // Pasamos la lista de empleados al formulario
+            // --- 2. PASA LA FUNCIÓN DE NAVEGACIÓN ---
+            onRegresar={() => navigation.goBack()}
           />
         </View>
       </ScrollView>

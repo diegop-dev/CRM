@@ -1,12 +1,13 @@
 import React from "react";
+// --- 1. Importamos TouchableOpacity (ya estaba, pero es importante) ---
 import { ScrollView, StyleSheet, View, Text, Image, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 // Importamos el FORMULARIO "TONTO"
-import ProyectoFormView from "../../view/Modulo 1/proyectoform"; // Ajusta esta ruta a tu proyectoform.jsx
+import ProyectoFormView from "../../view/Modulo 1/proyectoform"; 
 // Importamos el NUEVO HOOK de lógica
-import { useEditarProyectoLogic } from "../../controller/Modulo 1/editarproyecto"; // Ajusta esta ruta a tu useEditarProyectoLogic.js
+import { useEditarProyectoLogic } from "../../controller/Modulo 1/editarproyecto"; 
 
-export default function EditarProyectoView({ route }) {
+export default function EditarProyectoView({ route, navigation }) {
 
   // Usamos el nuevo hook para toda la lógica
   const {
@@ -14,25 +15,27 @@ export default function EditarProyectoView({ route }) {
     setTerminoBusqueda,
     proyecto,
     empleadosList,
-    proyectosRecientes, // <-- OBTENEMOS LA NUEVA LISTA
+    proyectosRecientes, 
     isLoading,
     handleBuscarProyecto,
     onChange,
     onGuardar,
-    handleLimpiar   // <-- OBTENEMOS LA NUEVA FUNCIÓN
+    handleLimpiar  
   } = useEditarProyectoLogic();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#2b3042" }}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        // Añadimos padding inferior al scroll para que el último item no quede
+        // oculto DEBAJO del botón flotante
+        contentContainerStyle={{ paddingBottom: 80 }} 
         keyboardShouldPersistTaps="handled"
       >
         {/* Encabezado */}
         <View style={styles.header}>
           <Image
-            source={require("../../../assets/LOGO_BLANCO.png")} // Ajusta esta ruta
+            source={require("../../../assets/LOGO_BLANCO.png")} 
             style={styles.headerIcon}
           />
           <Text style={styles.headerTitle}>Editar Proyecto</Text>
@@ -47,7 +50,7 @@ export default function EditarProyectoView({ route }) {
             placeholderTextColor="#999"
             value={terminoBusqueda}
             onChangeText={setTerminoBusqueda}
-            editable={!proyecto} // No se puede editar si ya hay un proyecto cargado
+            editable={!proyecto} 
           />
 
           {/* Botón cambia entre "Buscar" y "Limpiar" */}
@@ -78,16 +81,17 @@ export default function EditarProyectoView({ route }) {
           <View style={{ flex: 1, marginTop: 20 }}>
             <ProyectoFormView
               proyecto={proyecto}
-              modo="editar" // <-- ¡AQUÍ ESTÁ LA MAGIA!
+              modo="editar" 
               onChange={onChange}
               onGuardar={onGuardar}
               empleados={empleadosList}
+              // El botón de regreso DENTRO del form ya funciona
+              onRegresar={() => navigation.goBack()} 
             />
           </View>
         )}
 
-        {/* --- Lista de Proyectos Recientes (NUEVO) --- */}
-        {/* Se muestra solo si NO hay un proyecto buscado y NO está cargando */}
+        {/* --- Lista de Proyectos Recientes --- */}
         {!proyecto && !isLoading && (
           <View style={styles.recientesContainer}>
             <Text style={styles.recientesTitle}>
@@ -98,7 +102,6 @@ export default function EditarProyectoView({ route }) {
                 key={p.id_proyecto}
                 style={styles.recienteItem}
                 onPress={() => {
-                  // Al hacer clic, poblamos la barra de búsqueda Y buscamos
                   setTerminoBusqueda(p.nombre_proyecto);
                   handleBuscarProyecto(p.nombre_proyecto);
                 }}
@@ -110,6 +113,16 @@ export default function EditarProyectoView({ route }) {
         )}
 
       </ScrollView>
+
+      {/* --- BOTÓN DE REGRESO FLOTANTE AÑADIDO --- */}
+      {/* (Este botón se mostrará siempre, sin importar si hay un proyecto cargado o no) */}
+      <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.backButtonText}>Regresar</Text>
+      </TouchableOpacity>
+
     </SafeAreaView>
   );
 }
@@ -168,20 +181,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginLeft: 10,
   },
-  limpiarButton: { // <-- NUEVO ESTILO
-    backgroundColor: "#E74C3C", // Un color rojo para "Limpiar"
+  limpiarButton: { 
+    backgroundColor: "#E74C3C", 
   },
   searchButtonText: {
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "600",
   },
-
-  // --- NUEVOS ESTILOS ---
   recientesContainer: {
-    marginHorizontal: 0, // Ajustado para que ocupe el ancho
+    marginHorizontal: 0, 
     marginTop: 20,
-    backgroundColor: "#3a3f50", // Un fondo ligeramente más claro
+    backgroundColor: "#3a3f50", 
     borderRadius: 12,
     padding: 15,
   },
@@ -205,5 +216,25 @@ const styles = StyleSheet.create({
     color: "#f0f0f0",
     fontSize: 16,
   },
-  // --- FIN DE NUEVOS ESTILOS ---
+
+  // --- ESTILOS DEL BOTÓN DE REGRESO AÑADIDOS ---
+  backButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: '#77a7ab', // Color de acento
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25, // Forma de píldora
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 4,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });

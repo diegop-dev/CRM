@@ -1,14 +1,15 @@
 import React from "react";
 import { ScrollView, StyleSheet, View, Text, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-// Importamos el futuro componente de formulario
-import FacturaFormView from "./facturasform"; 
-// Importamos el hook de lógica que acabamos de crear
+// Importamos el componente de formulario
+import FacturaFormView from "./facturasform"; // Asegúrate que el nombre 'facturasform' sea correcto
+// Importamos el hook de lógica
 import { useAgregarFacturaLogic } from "../../../../controller/Modulo 2/SubModulos/Facturas/agregarfactura";
 
-export default function AgregarFacturaView() {
+// --- 1. RECIBE { navigation } ---
+export default function AgregarFacturaView({ navigation }) {
 
-  // Usamos el nuevo hook para obtener el estado y las funciones
+  // Usamos el hook para obtener el estado y las funciones
   const { factura, clientesList, onChange, onGuardar } = useAgregarFacturaLogic();
 
   return (
@@ -20,7 +21,6 @@ export default function AgregarFacturaView() {
         {/* Encabezado */}
         <View style={styles.header}>
           <Image
-            // Asumo la ruta del logo basado en la jerarquía
             source={require("../../../../../assets/LOGO_BLANCO.png")} 
             style={styles.headerIcon}
           />
@@ -36,7 +36,9 @@ export default function AgregarFacturaView() {
             modo="crear"
             onChange={onChange}
             onGuardar={onGuardar}
-            clientes={clientesList} // Pasamos la lista de clientes al formulario
+            clientes={clientesList} 
+            // --- 2. PASA LA FUNCIÓN DE NAVEGACIÓN ---
+            onRegresar={() => navigation.goBack()}
           />
         </View>
       </ScrollView>
@@ -45,7 +47,6 @@ export default function AgregarFacturaView() {
 }
 
 // --- Estilos ---
-// (Copiados de agregarproyecto.jsx para mantener consistencia)
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",

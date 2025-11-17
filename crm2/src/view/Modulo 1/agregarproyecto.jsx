@@ -5,7 +5,8 @@ import ProyectoFormView from "../../view/Modulo 1/proyectoform"; // Asumo la rut
 // Importamos el NUEVO hook de lógica
 import { useAgregarProyectoLogic } from "../../controller/Modulo 1/agregarproyecto";
 
-export default function AgregarProyectoView() {
+// --- 1. RECIBE { navigation } ---
+export default function AgregarProyectoView({ navigation }) {
 
   // Usamos el nuevo hook para obtener el estado y las funciones
   const { proyecto, empleadosList, onChange, onGuardar } = useAgregarProyectoLogic();
@@ -35,6 +36,8 @@ export default function AgregarProyectoView() {
             onChange={onChange}
             onGuardar={onGuardar}
             empleados={empleadosList} // Pasamos la lista de empleados al formulario
+            // --- 2. PASA LA FUNCIÓN DE NAVEGACIÓN ---
+            onRegresar={() => navigation.goBack()} 
           />
         </View>
       </ScrollView>

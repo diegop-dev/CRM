@@ -11,23 +11,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// --- CONSTANTES DE DATOS ---
+// --- CONSTANTES DE DATOS (Sin cambios) ---
 const TIPO_DATA = ["Software", "Marketing", "Recursos Humanos", "Otro"];
 const ESTADO_DATA = ["Iniciado", "En Progreso", "Completado", "Pausado"];
 const PRIORIDAD_DATA = ["Baja", "Media", "Alta"];
-const DIAS_DATA = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
-const MESES_DATA = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
-// Aumentamos el rango de años para fechas
-const AÑOS_DATA = Array.from({ length: 10 }, (_, i) => (2024 + i).toString());
 
-// --- CONSTANTES DE ESTILO DEL PICKER ---
-const ITEM_HEIGHT = 44;
-const CONTAINER_HEIGHT = 220;
-const WHEEL_PADDING = (CONTAINER_HEIGHT - ITEM_HEIGHT) / 2;
-
-
-// --- Componentes reutilizables ---
-// (Componente de Input de Texto)
+// --- Componentes reutilizables (Sin cambios) ---
 const FormInput = React.memo(({ label, value, onChangeText, editable = true, multiline = false, ...props }) => (
   <View style={styles.inputContainer}>
     <Text style={styles.inputLabel}>{label}</Text>
@@ -48,7 +37,6 @@ const FormInput = React.memo(({ label, value, onChangeText, editable = true, mul
   </View>
 ));
 
-// (Componente de Selector Táctil)
 const SelectInput = React.memo(({ label, value, onPress, editable = true }) => (
   <TouchableOpacity onPress={editable ? onPress : undefined} activeOpacity={editable ? 0.8 : 1}>
     <View style={styles.inputContainer}>
@@ -68,139 +56,35 @@ const SelectInput = React.memo(({ label, value, onPress, editable = true }) => (
   </TouchableOpacity>
 ));
 
-// --- Componentes del Picker Modal (JS) ---
-// (Item individual del picker)
-const JSPickerItem = ({ label }) => (
-  <View style={styles.pickerItem}>
-    <Text style={styles.pickerItemText}>
-      {label}
-    </Text>
-  </View>
-);
-
-// (Rueda selectora)
-const TumblerWheel = ({ data, onValueChange, value }) => {
-  const ref = React.useRef(null);
-  let initialIndex = data.indexOf(value);
-  if (initialIndex < 0) initialIndex = 0;
-  const initialOffset = initialIndex * ITEM_HEIGHT;
-
-  const handleScrollEnd = (e) => {
-    const y = e.nativeEvent.contentOffset.y;
-    const index = Math.round(y / ITEM_HEIGHT);
-    if (index >= 0 && index < data.length) {
-      const newValue = data[index];
-      onValueChange(newValue);
-    }
-  };
-
+// --- Componente de Lista Simple (Sin cambios) ---
+const SimplePickerList = ({ data, onSelect, currentValue }) => {
+  const isObjectList = (typeof data[0] === 'object' && data[0] !== null);
+  
   return (
-    <ScrollView
-      ref={ref}
-      style={styles.jsDatePickerColumn}
-      showsVerticalScrollIndicator={false}
-      snapToInterval={ITEM_HEIGHT}
-      decelerationRate="fast"
-      contentOffset={{ y: initialOffset }}
-      contentContainerStyle={{ 
-        paddingTop: WHEEL_PADDING, 
-        paddingBottom: WHEEL_PADDING
-      }}
-      onMomentumScrollEnd={handleScrollEnd}
-      onScrollEndDrag={handleScrollEnd}
-    >
-      {data.map((item, index) => <JSPickerItem key={`${item}_${index}`} label={item} />)}
+    <ScrollView style={styles.simplePickerContainer}>
+      {data.map((item, index) => {
+        const label = isObjectList ? item.label : item;
+        const isSelected = currentValue === label;
+
+        return (
+          <TouchableOpacity
+            key={index}
+            style={[styles.simplePickerItem, isSelected && styles.simplePickerItemSelected]}
+            onPress={() => onSelect(item)} 
+          >
+            <Text style={[
+              styles.simplePickerItemText, 
+              isSelected && styles.simplePickerItemSelectedText
+            ]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </ScrollView>
   );
 };
 
-
-// --- Paso 1 ---
-const Paso1 = ({ proyecto, onChange, editable, onTipoPress, onInicioPress, onFinPress }) => (
-  <>
-    {proyecto.id_proyecto && (
-      <FormInput label="ID de Proyecto" value={proyecto.id_proyecto.toString()} editable={false} />
-    )}
-    <FormInput 
-      label="Nombre del Proyecto" 
-      value={proyecto.nombreProyecto} 
-      onChangeText={(val) => onChange('nombreProyecto', val)} 
-      editable={editable} 
-    />
-    <SelectInput 
-      label="Tipo de Proyecto" 
-      value={proyecto.tipoProyecto} 
-      onPress={onTipoPress} 
-      editable={editable} 
-    />
-    <SelectInput
-      label="Fecha de Inicio"
-      value={
-        proyecto.diaInicio && proyecto.mesInicio && proyecto.añoInicio
-          ? `${proyecto.diaInicio}/${proyecto.mesInicio}/${proyecto.añoInicio}`
-          : ""
-      }
-      onPress={onInicioPress}
-      editable={editable}
-    />
-    <SelectInput
-      label="Fecha de Fin"
-      value={
-        proyecto.diaFin && proyecto.mesFin && proyecto.añoFin
-          ? `${proyecto.diaFin}/${proyecto.mesFin}/${proyecto.añoFin}`
-          : ""
-      }
-      onPress={onFinPress}
-      editable={editable}
-    />
-    <FormInput 
-      label="Descripción" 
-      value={proyecto.descripcion} 
-      onChangeText={(val) => onChange('descripcion', val)} 
-      multiline 
-      editable={editable} 
-    />
-  </>
-);
-
-// --- Paso 2 ---
-const Paso2 = ({ proyecto, onChange, onGuardar, editable, modo, onResponsablePress, onEstadoPress, onPrioridadPress }) => (
-  <>
-    <SelectInput 
-      label="Responsable / Encargado" 
-      // Mostramos el nombre, pero el valor guardado es el ID
-      value={proyecto.responsableNombre || ""}
-      onPress={onResponsablePress} 
-      editable={editable} 
-    />
-    <SelectInput 
-      label="Estado" 
-      value={proyecto.estado} 
-      onPress={onEstadoPress} 
-      editable={editable} 
-    />
-    <SelectInput 
-      label="Prioridad" 
-      value={proyecto.prioridad} 
-      onPress={onPrioridadPress} 
-      editable={editable} 
-    />
-    <FormInput
-      label="Recursos (uno por línea)"
-      value={Array.isArray(proyecto.RecursosList) ? proyecto.RecursosList.join("\n") : ""}
-      onChangeText={(text) => onChange('RecursosList', text.split("\n").filter(r => r.trim() !== ""))}
-      multiline
-      editable={editable}
-    />
-    {editable && (
-      <TouchableOpacity style={styles.saveButton} onPress={onGuardar}>
-        <Text style={styles.saveButtonText}>
-          {modo === "editar" ? "Guardar Cambios" : "Guardar Proyecto"}
-        </Text>
-      </TouchableOpacity>
-    )}
-  </>
-);
 
 // --- Componente Principal ---
 export default function ProyectoFormView({
@@ -208,13 +92,13 @@ export default function ProyectoFormView({
   modo = "crear",
   onChange,
   onGuardar,
-  empleados = [] // Recibe la lista de empleados
+  onRegresar,
+  empleados = [] 
 }) {
   
-  const [step, setStep] = useState(1);
   const editable = modo !== "consultar";
 
-  // --- Estados de los Modales ---
+  // --- Estados de los Modales (Sin cambios) ---
   const [showTipoModal, setShowTipoModal] = useState(false);
   const [showInicioModal, setShowInicioModal] = useState(false);
   const [showFinModal, setShowFinModal] = useState(false);
@@ -222,56 +106,73 @@ export default function ProyectoFormView({
   const [showEstadoModal, setShowEstadoModal] = useState(false);
   const [showPrioridadModal, setShowPrioridadModal] = useState(false);
 
-  // --- Estados Temporales de los Pickers ---
-  const [tempTipo, setTempTipo] = useState('');
+  // --- Estados Temporales de Fecha (Sin cambios) ---
   const [tempDiaInicio, setTempDiaInicio] = useState('');
   const [tempMesInicio, setTempMesInicio] = useState('');
   const [tempAñoInicio, setTempAñoInicio] = useState('');
   const [tempDiaFin, setTempDiaFin] = useState('');
   const [tempMesFin, setTempMesFin] = useState('');
   const [tempAñoFin, setTempAñoFin] = useState('');
-  const [tempResponsable, setTempResponsable] = useState(null); // { label, value }
-  const [tempEstado, setTempEstado] = useState('');
-  const [tempPrioridad, setTempPrioridad] = useState('');
-
-  // --- Datos para Pickers ---
+  
+  // --- Lógica de Props (Sin cambios) ---
   const RESPONSABLE_DATA = empleados.map(emp => ({
     label: `${emp.nombres} ${emp.apellido_paterno}`,
     value: emp.id_empleado
   }));
-  const RESPONSABLE_LABELS = RESPONSABLE_DATA.map(r => r.label);
-
-  // --- Funciones para Abrir Modales (con valores iniciales) ---
-  const openTipoModal = () => {
-    setTempTipo(proyecto.tipoProyecto || TIPO_DATA[0]);
-    setShowTipoModal(true);
-  };
-  const openEstadoModal = () => {
-    setTempEstado(proyecto.estado || ESTADO_DATA[0]);
-    setShowEstadoModal(true);
-  };
-  const openPrioridadModal = () => {
-    setTempPrioridad(proyecto.prioridad || PRIORIDAD_DATA[0]);
-    setShowPrioridadModal(true);
-  };
+  const openTipoModal = () => setShowTipoModal(true);
+  const openEstadoModal = () => setShowEstadoModal(true);
+  const openPrioridadModal = () => setShowPrioridadModal(true);
+  const openResponsableModal = () => setShowResponsableModal(true);
   const openInicioModal = () => {
-    setTempDiaInicio(proyecto.diaInicio || DIAS_DATA[0]);
-    setTempMesInicio(proyecto.mesInicio || MESES_DATA[0]);
-    setTempAñoInicio(proyecto.añoInicio || AÑOS_DATA[0]);
+    setTempDiaInicio(proyecto.diaInicio || '');
+    setTempMesInicio(proyecto.mesInicio || '');
+    setTempAñoInicio(proyecto.añoInicio || '');
     setShowInicioModal(true);
   };
   const openFinModal = () => {
-    setTempDiaFin(proyecto.diaFin || DIAS_DATA[0]);
-    setTempMesFin(proyecto.mesFin || MESES_DATA[0]);
-    setTempAñoFin(proyecto.añoFin || AÑOS_DATA[0]);
+    setTempDiaFin(proyecto.diaFin || '');
+    setTempMesFin(proyecto.mesFin || '');
+    setTempAñoFin(proyecto.añoFin || '');
     setShowFinModal(true);
   };
-  const openResponsableModal = () => {
-    const currentLabel = proyecto.responsableNombre || RESPONSABLE_LABELS[0];
-    const currentValue = proyecto.idResponsable || (RESPONSABLE_DATA[0] ? RESPONSABLE_DATA[0].value : '');
-    setTempResponsable({ label: currentLabel, value: currentValue });
-    setShowResponsableModal(true);
+
+  // --- ¡NUEVAS FUNCIONES DE VALIDACIÓN! ---
+  const handleDiaChange = (text, setter) => {
+    const numericText = text.replace(/[^0-9]/g, ''); // Solo permite números
+    if (numericText === '') {
+      setter('');
+      return;
+    }
+    if (numericText === '0' || numericText === '00') {
+       setter(numericText); // Permite empezar con "0"
+       return;
+    }
+    const value = parseInt(numericText, 10);
+    if (value > 31) {
+      setter('31'); // Si es mayor a 31, lo "clava" en 31
+    } else {
+      setter(numericText); // Guarda el texto numérico ("05" se queda como "05")
+    }
   };
+
+  const handleMesChange = (text, setter) => {
+    const numericText = text.replace(/[^0-9]/g, ''); // Solo permite números
+    if (numericText === '') {
+      setter('');
+      return;
+    }
+     if (numericText === '0' || numericText === '00') {
+       setter(numericText); // Permite empezar con "0"
+       return;
+    }
+    const value = parseInt(numericText, 10);
+    if (value > 12) {
+      setter('12'); // Si es mayor a 12, lo "clava" en 12
+    } else {
+      setter(numericText); // Guarda el texto numérico
+    }
+  };
+
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -280,111 +181,172 @@ export default function ProyectoFormView({
         keyboardDismissMode="on-drag"
         contentContainerStyle={styles.scrollContainer}
       >
-        {step === 1 ? (
-          <Paso1
-            proyecto={proyecto}
-            onChange={onChange}
-            editable={editable}
-            onTipoPress={openTipoModal}
-            onInicioPress={openInicioModal}
-            onFinPress={openFinModal}
-          />
-        ) : (
-          <Paso2
-            proyecto={proyecto}
-            onChange={onChange}
-            onGuardar={onGuardar}
-            editable={editable}
-            modo={modo}
-            onResponsablePress={openResponsableModal}
-            onEstadoPress={openEstadoModal}
-            onPrioridadPress={openPrioridadModal}
-          />
-        )}
+        
+        {/* --- LAYOUT DE 2 COLUMNAS (Sin cambios) --- */}
+        <View style={styles.columnsContainer}>
+          {/* Columna Izquierda */}
+          <View style={styles.leftColumn}>
+            {proyecto.id_proyecto && (
+              <FormInput label="ID de Proyecto" value={proyecto.id_proyecto.toString()} editable={false} />
+            )}
+            <FormInput 
+              label="Nombre del Proyecto" 
+              value={proyecto.nombreProyecto} 
+              onChangeText={(val) => onChange('nombreProyecto', val)} 
+              editable={editable} 
+            />
+            <SelectInput 
+              label="Tipo de Proyecto" 
+              value={proyecto.tipoProyecto} 
+              onPress={openTipoModal}
+              editable={editable} 
+            />
+            <SelectInput
+              label="Fecha de Inicio"
+              value={
+                proyecto.diaInicio && proyecto.mesInicio && proyecto.añoInicio
+                  ? `${proyecto.diaInicio}/${proyecto.mesInicio}/${proyecto.añoInicio}`
+                  : ""
+              }
+              onPress={openInicioModal} 
+              editable={editable}
+            />
+            <SelectInput
+              label="Fecha de Fin"
+              value={
+                proyecto.diaFin && proyecto.mesFin && proyecto.añoFin
+                  ? `${proyecto.diaFin}/${proyecto.mesFin}/${proyecto.añoFin}`
+                  : ""
+              }
+              onPress={openFinModal} 
+              editable={editable}
+            />
+            <SelectInput 
+              label="Responsable / Encargado" 
+              value={proyecto.responsableNombre || ""}
+              onPress={openResponsableModal} 
+              editable={editable} 
+            />
+          </View>
 
-        <View style={styles.buttonRow}>
-          {step > 1 && (
-            <TouchableOpacity
-              style={[styles.navButton, styles.backButton]}
-              onPress={() => setStep(step - 1)}
-            >
-              <Text style={styles.navButtonText}>Regresar</Text>
-            </TouchableOpacity>
-          )}
-          {step < 2 && (
-            <TouchableOpacity
-              style={[styles.navButton, styles.nextButton]}
-              onPress={() => setStep(step + 1)}
-            >
-              <Text style={styles.navButtonText}>Continuar</Text>
-            </TouchableOpacity>
-          )}
+          {/* Columna Derecha */}
+          <View style={styles.rightColumn}>
+            <SelectInput 
+              label="Estado" 
+              value={proyecto.estado} 
+              onPress={openEstadoModal}
+              editable={editable} 
+            />
+            <SelectInput 
+              label="Prioridad" 
+              value={proyecto.prioridad} 
+              onPress={openPrioridadModal}
+              editable={editable} 
+            />
+            <FormInput
+              label="Recursos (uno por línea)"
+              value={Array.isArray(proyecto.RecursosList) ? proyecto.RecursosList.join("\n") : ""}
+              onChangeText={(text) => onChange('RecursosList', text.split("\n").filter(r => r.trim() !== ""))}
+              multiline
+              editable={editable}
+              style={[styles.textInput, styles.multilineInput, { height: 120 }]}
+            />
+            <FormInput 
+              label="Descripción" 
+              value={proyecto.descripcion} 
+              onChangeText={(val) => onChange('descripcion', val)} 
+              multiline 
+              editable={editable} 
+              style={[styles.textInput, styles.multilineInput, { height: 120 }]}
+            />
+          </View>
         </View>
+
+        {/* --- BOTONES FINALES (Sin cambios) --- */}
+        {editable && (
+          <View style={styles.finalButtonRow}>
+            <TouchableOpacity
+              style={[styles.finalButton, styles.regresarButton]}
+              onPress={onRegresar}
+            >
+              <Text style={styles.finalButtonText}>Regresar</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.finalButton, styles.guardarButton]}
+              onPress={onGuardar}
+            >
+              <Text style={styles.finalButtonText}>
+                {modo === "editar" ? "Guardar Cambios" : "Guardar"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
 
       {/* --- MODALES --- */}
 
-      {/* Modal Tipo Proyecto */}
-      <Modal visible={showTipoModal} animationType="slide" transparent={true} onRequestClose={() => setShowTipoModal(false)}>
+      {/* --- MODALES DE LISTA SIMPLE (Sin cambios) --- */}
+      <Modal visible={showTipoModal} animationType="fade" transparent={true} onRequestClose={() => setShowTipoModal(false)}>
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowTipoModal(false)} />
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerHeader}>
-            <TouchableOpacity onPress={() => {
-              onChange('tipoProyecto', tempTipo);
-              setShowTipoModal(false);
-            }}>
-              <Text style={styles.pickerButtonText}>Hecho</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.jsPickerContainer}>
-            <TumblerWheel data={TIPO_DATA} onValueChange={setTempTipo} value={tempTipo} />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
-          </View>
+        <View style={styles.listPickerModal}>
+          <SimplePickerList
+            data={TIPO_DATA}
+            currentValue={proyecto.tipoProyecto}
+            onSelect={(selectedItem) => {
+              onChange('tipoProyecto', selectedItem); 
+              setShowTipoModal(false); 
+            }}
+          />
         </View>
       </Modal>
-
-      {/* Modal Estado Proyecto */}
-      <Modal visible={showEstadoModal} animationType="slide" transparent={true} onRequestClose={() => setShowEstadoModal(false)}>
+      {/* ... (otros modales de lista simple: Estado, Prioridad, Responsable) ... */}
+      <Modal visible={showEstadoModal} animationType="fade" transparent={true} onRequestClose={() => setShowEstadoModal(false)}>
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowEstadoModal(false)} />
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerHeader}>
-            <TouchableOpacity onPress={() => {
-              onChange('estado', tempEstado);
+        <View style={styles.listPickerModal}>
+          <SimplePickerList
+            data={ESTADO_DATA}
+            currentValue={proyecto.estado}
+            onSelect={(selectedItem) => {
+              onChange('estado', selectedItem);
               setShowEstadoModal(false);
-            }}>
-              <Text style={styles.pickerButtonText}>Hecho</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.jsPickerContainer}>
-            <TumblerWheel data={ESTADO_DATA} onValueChange={setTempEstado} value={tempEstado} />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
-          </View>
+            }}
+          />
         </View>
       </Modal>
-
-      {/* Modal Prioridad Proyecto */}
-      <Modal visible={showPrioridadModal} animationType="slide" transparent={true} onRequestClose={() => setShowPrioridadModal(false)}>
+      <Modal visible={showPrioridadModal} animationType="fade" transparent={true} onRequestClose={() => setShowPrioridadModal(false)}>
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowPrioridadModal(false)} />
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerHeader}>
-            <TouchableOpacity onPress={() => {
-              onChange('prioridad', tempPrioridad);
+        <View style={styles.listPickerModal}>
+          <SimplePickerList
+            data={PRIORIDAD_DATA}
+            currentValue={proyecto.prioridad}
+            onSelect={(selectedItem) => {
+              onChange('prioridad', selectedItem);
               setShowPrioridadModal(false);
-            }}>
-              <Text style={styles.pickerButtonText}>Hecho</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.jsPickerContainer}>
-            <TumblerWheel data={PRIORIDAD_DATA} onValueChange={setTempPrioridad} value={tempPrioridad} />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
-          </View>
+            }}
+          />
+        </View>
+      </Modal>
+      <Modal visible={showResponsableModal} animationType="fade" transparent={true} onRequestClose={() => setShowResponsableModal(false)}>
+        <Pressable style={styles.pickerBackdrop} onPress={() => setShowResponsableModal(false)} />
+        <View style={styles.listPickerModal}>
+          <SimplePickerList
+            data={RESPONSABLE_DATA}
+            currentValue={proyecto.responsableNombre}
+            onSelect={(selectedItem) => {
+              onChange('idResponsable', selectedItem.value);
+              onChange('responsableNombre', selectedItem.label);
+              setShowResponsableModal(false);
+            }}
+          />
         </View>
       </Modal>
 
-      {/* Modal Fecha Inicio */}
-      <Modal visible={showInicioModal} animationType="slide" transparent={true} onRequestClose={() => setShowInicioModal(false)}>
+
+      {/* --- MODALES DE FECHA (CON VALIDACIÓN APLICADA) --- */}
+      <Modal visible={showInicioModal} animationType="fade" transparent={true} onRequestClose={() => setShowInicioModal(false)}>
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowInicioModal(false)} />
-        <View style={styles.pickerSheet}>
+        <View style={styles.datePickerModal}>
           <View style={styles.pickerHeader}>
             <TouchableOpacity onPress={() => {
               onChange('diaInicio', tempDiaInicio);
@@ -395,19 +357,50 @@ export default function ProyectoFormView({
               <Text style={styles.pickerButtonText}>Hecho</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.jsDatePickerContainer}>
-            <TumblerWheel data={DIAS_DATA} onValueChange={setTempDiaInicio} value={tempDiaInicio} />
-            <TumblerWheel data={MESES_DATA} onValueChange={setTempMesInicio} value={tempMesInicio} />
-            <TumblerWheel data={AÑOS_DATA} onValueChange={setTempAñoInicio} value={tempAñoInicio} />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
+          <View style={styles.dateModalContainer}>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Día</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempDiaInicio}
+                onChangeText={(text) => handleDiaChange(text, setTempDiaInicio)} // <-- VALIDACIÓN
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="DD"
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Mes</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempMesInicio}
+                onChangeText={(text) => handleMesChange(text, setTempMesInicio)} // <-- VALIDACIÓN
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="M"
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Año</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempAñoInicio}
+                onChangeText={setTempAñoInicio} // <-- Sin validación
+                keyboardType="numeric"
+                maxLength={4}
+                placeholder="AAAA"
+                placeholderTextColor="#999"
+              />
+            </View>
           </View>
         </View>
       </Modal>
 
-      {/* Modal Fecha Fin */}
-      <Modal visible={showFinModal} animationType="slide" transparent={true} onRequestClose={() => setShowFinModal(false)}>
+      <Modal visible={showFinModal} animationType="fade" transparent={true} onRequestClose={() => setShowFinModal(false)}>
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowFinModal(false)} />
-        <View style={styles.pickerSheet}>
+        <View style={styles.datePickerModal}>
           <View style={styles.pickerHeader}>
             <TouchableOpacity onPress={() => {
               onChange('diaFin', tempDiaFin);
@@ -418,37 +411,43 @@ export default function ProyectoFormView({
               <Text style={styles.pickerButtonText}>Hecho</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.jsDatePickerContainer}>
-            <TumblerWheel data={DIAS_DATA} onValueChange={setTempDiaFin} value={tempDiaFin} />
-            <TumblerWheel data={MESES_DATA} onValueChange={setTempMesFin} value={tempMesFin} />
-            <TumblerWheel data={AÑOS_DATA} onValueChange={setTempAñoFin} value={tempAñoFin} />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal Responsable */}
-      <Modal visible={showResponsableModal} animationType="slide" transparent={true} onRequestClose={() => setShowResponsableModal(false)}>
-        <Pressable style={styles.pickerBackdrop} onPress={() => setShowResponsableModal(false)} />
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerHeader}>
-            <TouchableOpacity onPress={() => {
-              // Encontramos el objeto {label, value} basado en el label
-              const selectedData = RESPONSABLE_DATA.find(r => r.label === tempResponsable.label) || RESPONSABLE_DATA[0];
-              onChange('idResponsable', selectedData.value);
-              onChange('responsableNombre', selectedData.label);
-              setShowResponsableModal(false);
-            }}>
-              <Text style={styles.pickerButtonText}>Hecho</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.jsPickerContainer}>
-            <TumblerWheel 
-              data={RESPONSABLE_LABELS} 
-              onValueChange={(label) => setTempResponsable({ ...tempResponsable, label })} 
-              value={tempResponsable ? tempResponsable.label : ''} 
-            />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
+          <View style={styles.dateModalContainer}>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Día</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempDiaFin}
+                onChangeText={(text) => handleDiaChange(text, setTempDiaFin)} // <-- VALIDACIÓN
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="DD"
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Mes</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempMesFin}
+                onChangeText={(text) => handleMesChange(text, setTempMesFin)} // <-- VALIDACIÓN
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="M"
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Año</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempAñoFin}
+                onChangeText={setTempAñoFin} // <-- Sin validación
+                keyboardType="numeric"
+                maxLength={4}
+                placeholder="AAAA"
+                placeholderTextColor="#999"
+              />
+            </View>
           </View>
         </View>
       </Modal>
@@ -464,6 +463,16 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     paddingHorizontal: 20,
     paddingTop: 10,
+  },
+  columnsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  leftColumn: {
+    width: '48%',
+  },
+  rightColumn: {
+    width: '48%',
   },
   inputContainer: { marginBottom: 18 },
   inputLabel: { 
@@ -498,97 +507,123 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top'
   },
-  navButton: { 
-    flex: 1, 
-    borderRadius: 25, 
-    paddingVertical: 12, 
-    alignItems: "center", 
-    marginHorizontal: 5 
+  finalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end', 
+    marginTop: 30,
+    marginBottom: 40,
   },
-  backButton: { backgroundColor: "#006480" },
-  nextButton: { backgroundColor: "#77a7ab" },
-  navButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "600" },
-  buttonRow: { flexDirection: "row", marginTop: 25, marginBottom: 40 },
-  saveButton: { 
-    backgroundColor: "#77a7ab", 
-    borderRadius: 25, 
-    paddingVertical: 12, 
-    alignItems: "center", 
-    marginTop: 25 
-  },
-  saveButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
-
-  // --- Estilos del Picker Modal (Copiados de empleadosform.jsx) ---
-  pickerBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-  },
-  pickerSheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 30,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: -3 },
-    shadowRadius: 5,
-  },
-  pickerHeader: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
+  finalButton: {
     paddingVertical: 12,
-    borderBottomWidth: 0.5,
-    borderColor: '#CCC',
-    alignItems: 'flex-end',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  pickerButtonText: {
-    fontSize: 16,
-    color: "#007AFF",
-    fontWeight: "500",
-  },
-  jsPickerContainer: {
-    height: CONTAINER_HEIGHT,
-    position: 'relative',
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-  },
-  jsDatePickerContainer: {
-    flexDirection: "row",
-    height: CONTAINER_HEIGHT,
-    backgroundColor: '#FFFFFF',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  jsDatePickerColumn: {
-    flex: 1,
-    height: CONTAINER_HEIGHT,
-  },
-  pickerItem: {
-    height: ITEM_HEIGHT,
-    justifyContent: 'center',
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    marginLeft: 10, 
     alignItems: 'center',
   },
-  pickerItemText: {
-    fontSize: 16,
-    color: "#333",
+  regresarButton: {
+    backgroundColor: '#6c757d', 
   },
-  pickerHighlight: {
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 20,
+  guardarButton: {
+    backgroundColor: '#77a7ab', 
+  },
+  finalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  pickerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+  },
+
+  // --- ESTILOS DE LISTA SIMPLE FLOTANTE ---
+  listPickerModal: {
     position: 'absolute',
     top: '50%',
-    left: 10,
-    right: 10,
-    height: ITEM_HEIGHT,
-    marginTop: -ITEM_HEIGHT / 2,
-    backgroundColor: 'rgba(77, 77, 77, 0.05)',
+    left: '50%',
+    transform: [{ translateX: -175 }, { translateY: -150 }], 
+    width: 350, 
+    backgroundColor: '#2b3042',
+    borderRadius: 20,
+    elevation: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+    overflow: 'hidden', 
+  },
+  simplePickerContainer: {
+    maxHeight: 300, 
+    paddingVertical: 10, 
+  },
+  simplePickerItem: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#3a3f50', 
+  },
+  simplePickerItemText: {
+    color: '#f0f0f0', 
+    fontSize: 17,
+    textAlign: 'center',
+  },
+  simplePickerItemSelected: {
+    backgroundColor: '#3a3f50', 
+  },
+  simplePickerItemSelectedText: {
+    color: '#77a7ab', 
+    fontWeight: '600',
+  },
+
+  // --- ESTILOS DE FECHA FLOTANTE ---
+  datePickerModal: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -175 }, { translateY: -125 }], 
+    width: 350, 
+    backgroundColor: '#2b3042', 
+    borderRadius: 20,
+    elevation: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+    overflow: 'hidden', 
+  },
+  pickerHeader: { 
+    backgroundColor: '#3a3f50', 
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: '#5a5f70', 
+    alignItems: 'flex-end',
+  },
+  pickerButtonText: { 
+    fontSize: 16,
+    color: "#77a7ab", 
+    fontWeight: "600",
+  },
+  dateModalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 20,
+    paddingTop: 10,
+    paddingBottom: 20, 
+  },
+  dateInputColumn: {
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  dateInput: {
+    backgroundColor: '#3a3f50', 
+    color: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    textAlign: 'center',
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#5a5f70',
   },
 });

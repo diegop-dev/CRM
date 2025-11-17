@@ -8,24 +8,14 @@ import {
   ScrollView,
   Modal,
   Pressable,
-  Alert, // <--- Importamos Alert
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // --- CONSTANTES DE DATOS ---
 const METODO_PAGO_DATA = ["Efectivo", "Tarjeta", "Transferencia"];
-const DIAS_DATA = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
-const MESES_DATA = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
-const AÑOS_DATA = Array.from({ length: 10 }, (_, i) => (2024 + i).toString());
 
-// --- CONSTANTES DE ESTILO DEL PICKER ---
-const ITEM_HEIGHT = 44;
-const CONTAINER_HEIGHT = 220;
-const WHEEL_PADDING = (CONTAINER_HEIGHT - ITEM_HEIGHT) / 2;
-
-
-// --- Componentes reutilizables (Copiados de proyectoform.jsx) ---
-// (Componente de Input de Texto)
+// --- Componentes reutilizables (Sin cambios) ---
 const FormInput = React.memo(({ label, value, onChangeText, editable = true, multiline = false, ...props }) => (
   <View style={styles.inputContainer}>
     <Text style={styles.inputLabel}>{label}</Text>
@@ -47,7 +37,6 @@ const FormInput = React.memo(({ label, value, onChangeText, editable = true, mul
   </View>
 ));
 
-// (Componente de Selector Táctil)
 const SelectInput = React.memo(({ label, value, onPress, editable = true }) => (
   <TouchableOpacity onPress={editable ? onPress : undefined} activeOpacity={editable ? 0.8 : 1}>
     <View style={styles.inputContainer}>
@@ -67,53 +56,36 @@ const SelectInput = React.memo(({ label, value, onPress, editable = true }) => (
   </TouchableOpacity>
 ));
 
-// (Item individual del picker)
-const JSPickerItem = ({ label }) => (
-  <View style={styles.pickerItem}>
-    <Text style={styles.pickerItemText}>
-      {label}
-    </Text>
-  </View>
-);
-
-// (Rueda selectora)
-const TumblerWheel = ({ data, onValueChange, value }) => {
-  const ref = React.useRef(null);
-  let initialIndex = data.indexOf(value);
-  if (initialIndex < 0) initialIndex = 0;
-  const initialOffset = initialIndex * ITEM_HEIGHT;
-
-  const handleScrollEnd = (e) => {
-    const y = e.nativeEvent.contentOffset.y;
-    const index = Math.round(y / ITEM_HEIGHT);
-    if (index >= 0 && index < data.length) {
-      const newValue = data[index];
-      onValueChange(newValue);
-    }
-  };
-
+// --- Componente de Lista Simple (Sin cambios) ---
+const SimplePickerList = ({ data, onSelect, currentValue }) => {
+  const isObjectList = (typeof data[0] === 'object' && data[0] !== null);
+  
   return (
-    <ScrollView
-      ref={ref}
-      style={styles.jsDatePickerColumn}
-      showsVerticalScrollIndicator={false}
-      snapToInterval={ITEM_HEIGHT}
-      decelerationRate="fast"
-      contentOffset={{ y: initialOffset }}
-      contentContainerStyle={{ 
-        paddingTop: WHEEL_PADDING, 
-        paddingBottom: WHEEL_PADDING
-      }}
-      onMomentumScrollEnd={handleScrollEnd}
-      onScrollEndDrag={handleScrollEnd}
-    >
-      {data.map((item, index) => <JSPickerItem key={`${item}_${index}`} label={item} />)}
+    <ScrollView style={styles.simplePickerContainer}>
+      {data.map((item, index) => {
+        const label = isObjectList ? item.label : item;
+        const isSelected = currentValue === label;
+
+        return (
+          <TouchableOpacity
+            key={index}
+            style={[styles.simplePickerItem, isSelected && styles.simplePickerItemSelected]}
+            onPress={() => onSelect(item)} 
+          >
+            <Text style={[
+              styles.simplePickerItemText, 
+              isSelected && styles.simplePickerItemSelectedText
+            ]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </ScrollView>
   );
 };
 
-// --- Formateador de Moneda ---
-// Función simple para formatear el monto
+// --- Formateador de Moneda (Sin cambios) ---
 const formatCurrency = (value) => {
   const cleanValue = (value || "").toString().replace(/[^0-9.]/g, '');
   if (cleanValue === "" || cleanValue === ".") return { display: "$ 0.00 MXN", numeric: "" };
@@ -129,114 +101,7 @@ const formatCurrency = (value) => {
   return { display, numeric: cleanValue };
 };
 
-
-// --- Paso 1 ---
-const Paso1 = ({ factura, onChange, editable, onEmisionPress, onClientePress, onMetodoPagoPress }) => {
-  
-  // Lógica de formato de monto
-  const [displayMonto, setDisplayMonto] = useState(formatCurrency(factura.montoTotal).display);
-
-  const handleMontoChange = (text) => {
-    const { display, numeric } = formatCurrency(text);
-    setDisplayMonto(display); // Actualiza la vista
-    onChange('montoTotal', numeric); // Actualiza el estado
-  };
-
-  const handleMontoBlur = () => {
-    // Al salir, formatea bonito el valor que está en el estado
-    setDisplayMonto(formatCurrency(factura.montoTotal).display);
-  };
-
-  return (
-    <>
-      <FormInput 
-        label="ID de Factura" 
-        value="Autogenerado" 
-        editable={false} 
-      />
-      <FormInput 
-        label="Número de Folio" 
-        value={factura.numeroFolio} 
-        onChangeText={(val) => onChange('numeroFolio', val)} 
-        editable={editable} 
-        keyboardType="numeric"
-        maxLength={12} // Como pediste 12 dígitos
-        placeholder="123456789012"
-      />
-      <SelectInput
-        label="Fecha de Emisión"
-        value={
-          factura.diaEmision && factura.mesEmision && factura.añoEmision
-            ? `${factura.añoEmision}/${factura.mesEmision}/${factura.diaEmision}` // AAAA/MM/DD
-            : ""
-        }
-        onPress={onEmisionPress}
-        editable={editable}
-      />
-      <SelectInput 
-        label="Cliente / Proveedor + RFC" 
-        value={factura.clienteNombre || ""} // Mostramos el nombre
-        onPress={onClientePress} 
-        editable={editable} 
-      />
-      <FormInput
-        label="Monto Total"
-        value={displayMonto} // Usamos el valor formateado
-        onChangeText={handleMontoChange} // Usamos el manejador especial
-        onBlur={handleMontoBlur} // Formatea al salir
-        editable={editable}
-        keyboardType="numeric"
-        placeholder="$ 0.00 MXN"
-      />
-      <SelectInput 
-        label="Método de Pago" 
-        value={factura.metodoPago} 
-        onPress={onMetodoPagoPress} 
-        editable={editable} 
-      />
-    </>
-  );
-};
-
-
-// --- Paso 2 ---
-const Paso2 = ({ factura, onChange, onGuardar, editable, modo }) => {
-  
-  const handleSubirArchivo = () => {
-    // Por ahora, solo una alerta. Aquí iría la lógica de ImagePicker
-    Alert.alert("Subir Archivo", "Aquí se abriría la librería de archivos 📁");
-  };
-
-  return (
-    <>
-      <FormInput 
-        label="Responsable de Registro" 
-        value={factura.responsableRegistro} 
-        onChangeText={(val) => onChange('responsableRegistro', val)} 
-        editable={editable} 
-        placeholder="Nombre Apellido"
-      />
-
-      {/* Botón de Subir Archivo */}
-      <Text style={styles.inputLabel}>Subir Archivo</Text>
-      <TouchableOpacity 
-        style={styles.fileButton} 
-        onPress={handleSubirArchivo}
-        disabled={!editable}
-      >
-        <Text style={styles.fileButtonText}>📁</Text>
-      </TouchableOpacity>
-  
-      {editable && (
-        <TouchableOpacity style={styles.saveButton} onPress={onGuardar}>
-          <Text style={styles.saveButtonText}>
-            {modo === "editar" ? "Guardar Cambios" : "Guardar Factura"}
-          </Text>
-        </TouchableOpacity>
-      )}
-    </>
-  );
-};
+// --- Componentes "Paso1" y "Paso2" eliminados ---
 
 
 // --- Componente Principal ---
@@ -245,10 +110,11 @@ export default function FacturaFormView({
   modo = "crear",
   onChange,
   onGuardar,
-  clientes = [] // Recibe la lista de clientes
+  onRegresar, // <-- NUEVA PROP
+  clientes = [] 
 }) {
   
-  const [step, setStep] = useState(1);
+  // --- 'step' state eliminado ---
   const editable = modo !== "consultar";
 
   // --- Estados de los Modales ---
@@ -256,38 +122,59 @@ export default function FacturaFormView({
   const [showClienteModal, setShowClienteModal] = useState(false);
   const [showMetodoPagoModal, setShowMetodoPagoModal] = useState(false);
 
-  // --- Estados Temporales de los Pickers ---
+  // --- Estados Temporales de Fecha ---
   const [tempDiaEmision, setTempDiaEmision] = useState('');
   const [tempMesEmision, setTempMesEmision] = useState('');
   const [tempAñoEmision, setTempAñoEmision] = useState('');
-  const [tempCliente, setTempCliente] = useState(null); // { label, value }
-  const [tempMetodoPago, setTempMetodoPago] = useState('');
 
   // --- Datos para Pickers ---
-  // Formateamos los clientes para el picker
   const CLIENTE_DATA = clientes.map(cli => ({
-    label: `${cli.nombres} ${cli.apellido_paterno} (${cli.rfc})`, // "Nombre Apellido (RFC)"
+    label: `${cli.nombres} ${cli.apellido_paterno} (${cli.rfc})`, 
     value: cli.id_cliente
   }));
-  const CLIENTE_LABELS = CLIENTE_DATA.map(r => r.label);
 
-  // --- Funciones para Abrir Modales (con valores iniciales) ---
+  // --- Funciones para Abrir Modales ---
   const openEmisionModal = () => {
-    setTempDiaEmision(factura.diaEmision || DIAS_DATA[0]);
-    setTempMesEmision(factura.mesEmision || MESES_DATA[0]);
-    setTempAñoEmision(factura.añoEmision || AÑOS_DATA[0]);
+    setTempDiaEmision(factura.diaEmision || '');
+    setTempMesEmision(factura.mesEmision || '');
+    setTempAñoEmision(factura.añoEmision || '');
     setShowEmisionModal(true);
   };
-  const openMetodoPagoModal = () => {
-    setTempMetodoPago(factura.metodoPago || METODO_PAGO_DATA[0]);
-    setShowMetodoPagoModal(true);
+  const openMetodoPagoModal = () => setShowMetodoPagoModal(true);
+  const openClienteModal = () => setShowClienteModal(true);
+
+  // --- Lógica de formato de monto (Sin cambios) ---
+  const [displayMonto, setDisplayMonto] = useState(formatCurrency(factura.montoTotal).display);
+  const handleMontoChange = (text) => {
+    const { display, numeric } = formatCurrency(text);
+    setDisplayMonto(display);
+    onChange('montoTotal', numeric);
   };
-  const openClienteModal = () => {
-    const currentLabel = factura.clienteNombre || (CLIENTE_LABELS[0] || "");
-    const currentValue = factura.idCliente || (CLIENTE_DATA[0] ? CLIENTE_DATA[0].value : '');
-    setTempCliente({ label: currentLabel, value: currentValue });
-    setShowClienteModal(true);
+  const handleMontoBlur = () => {
+    setDisplayMonto(formatCurrency(factura.montoTotal).display);
   };
+
+  // --- Lógica de Archivo (Sin cambios) ---
+  const handleSubirArchivo = () => {
+    Alert.alert("Subir Archivo", "Aquí se abriría la librería de archivos 📁");
+  };
+
+  // --- Funciones de Validación de Fecha ---
+  const handleDiaChange = (text, setter) => {
+    const numericText = text.replace(/[^0-9]/g, ''); 
+    if (numericText === '') { setter(''); return; }
+    if (numericText === '0' || numericText === '00') { setter(numericText); return; }
+    const value = parseInt(numericText, 10);
+    if (value > 31) { setter('31'); } else { setter(numericText); }
+  };
+  const handleMesChange = (text, setter) => {
+    const numericText = text.replace(/[^0-9]/g, ''); 
+    if (numericText === '') { setter(''); return; }
+    if (numericText === '0' || numericText === '00') { setter(numericText); return; }
+    const value = parseInt(numericText, 10);
+    if (value > 12) { setter('12'); } else { setter(numericText); }
+  };
+
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -296,70 +183,138 @@ export default function FacturaFormView({
         keyboardDismissMode="on-drag"
         contentContainerStyle={styles.scrollContainer}
       >
-        {step === 1 ? (
-          <Paso1
-            factura={factura}
-            onChange={onChange}
-            editable={editable}
-            onEmisionPress={openEmisionModal}
-            onClientePress={openClienteModal}
-            onMetodoPagoPress={openMetodoPagoModal}
-          />
-        ) : (
-          <Paso2
-            factura={factura}
-            onChange={onChange}
-            onGuardar={onGuardar}
-            editable={editable}
-            modo={modo}
-          />
+        
+        {/* --- NUEVO LAYOUT DE 2 COLUMNAS --- */}
+        <View style={styles.columnsContainer}>
+
+          {/* --- Columna Izquierda --- */}
+          <View style={styles.leftColumn}>
+            <FormInput 
+              label="ID de Factura" 
+              value="Autogenerado" 
+              editable={false} 
+            />
+            <FormInput 
+              label="Número de Folio" 
+              value={factura.numeroFolio} 
+              onChangeText={(val) => onChange('numeroFolio', val)} 
+              editable={editable} 
+              keyboardType="numeric"
+              maxLength={12}
+              placeholder="123456789012"
+            />
+            <SelectInput
+              label="Fecha de Emisión"
+              value={
+                factura.diaEmision && factura.mesEmision && factura.añoEmision
+                  ? `${factura.diaEmision}/${factura.mesEmision}/${factura.añoEmision}`
+                  : ""
+              }
+              onPress={openEmisionModal} // <-- Modal flotante de fecha
+              editable={editable}
+            />
+            <SelectInput 
+              label="Cliente / Proveedor + RFC" 
+              value={factura.clienteNombre || ""}
+              onPress={openClienteModal} // <-- Modal flotante de lista
+              editable={editable} 
+            />
+            <FormInput
+              label="Monto Total"
+              value={displayMonto} 
+              onChangeText={handleMontoChange} 
+              onBlur={handleMontoBlur} 
+              editable={editable}
+              keyboardType="numeric"
+              placeholder="$ 0.00 MXN"
+            />
+            <SelectInput 
+              label="Método de Pago" 
+              value={factura.metodoPago} 
+              onPress={openMetodoPagoModal} // <-- Modal flotante de lista
+              editable={editable} 
+            />
+          </View>
+
+          {/* --- Columna Derecha --- */}
+          <View style={styles.rightColumn}>
+            <FormInput 
+              label="Responsable de Registro" 
+              value={factura.responsableRegistro} 
+              onChangeText={(val) => onChange('responsableRegistro', val)} 
+              editable={editable} 
+              placeholder="Nombre Apellido"
+            />
+            <Text style={styles.inputLabel}>Subir Archivo</Text>
+            <TouchableOpacity 
+              style={styles.fileButton} 
+              onPress={handleSubirArchivo}
+              disabled={!editable}
+            >
+              <Text style={styles.fileButtonText}>📁</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* --- NUEVA FILA DE BOTONES FINALES --- */}
+        {editable && (
+          <View style={styles.finalButtonRow}>
+            <TouchableOpacity
+              style={[styles.finalButton, styles.regresarButton]}
+              onPress={onRegresar}
+            >
+              <Text style={styles.finalButtonText}>Regresar</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.finalButton, styles.guardarButton]}
+              onPress={onGuardar}
+            >
+              <Text style={styles.finalButtonText}>
+                {modo === "editar" ? "Guardar Cambios" : "Guardar Factura"}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
 
-        <View style={styles.buttonRow}>
-          {step > 1 && (
-            <TouchableOpacity
-              style={[styles.navButton, styles.backButton]}
-              onPress={() => setStep(step - 1)}
-            >
-              <Text style={styles.navButtonText}>Regresar</Text>
-            </TouchableOpacity>
-          )}
-          {step < 2 && (
-            <TouchableOpacity
-              style={[styles.navButton, styles.nextButton]}
-              onPress={() => setStep(step + 1)}
-            >
-              <Text style={styles.navButtonText}>Continuar</Text>
-            </TouchableOpacity>
-          )}
-        </View>
       </ScrollView>
 
       {/* --- MODALES --- */}
 
-      {/* Modal Método de Pago */}
-      <Modal visible={showMetodoPagoModal} animationType="slide" transparent={true} onRequestClose={() => setShowMetodoPagoModal(false)}>
+      {/* --- MODALES DE LISTA SIMPLE (FLOTANTES) --- */}
+      <Modal visible={showMetodoPagoModal} animationType="fade" transparent={true} onRequestClose={() => setShowMetodoPagoModal(false)}>
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowMetodoPagoModal(false)} />
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerHeader}>
-            <TouchableOpacity onPress={() => {
-              onChange('metodoPago', tempMetodoPago);
-              setShowMetodoPagoModal(false);
-            }}>
-              <Text style={styles.pickerButtonText}>Hecho</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.jsPickerContainer}>
-            <TumblerWheel data={METODO_PAGO_DATA} onValueChange={setTempMetodoPago} value={tempMetodoPago} />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
-          </View>
+        <View style={styles.listPickerModal}>
+          <SimplePickerList
+            data={METODO_PAGO_DATA}
+            currentValue={factura.metodoPago}
+            onSelect={(selectedItem) => {
+              onChange('metodoPago', selectedItem); 
+              setShowMetodoPagoModal(false); 
+            }}
+          />
         </View>
       </Modal>
 
-      {/* Modal Fecha Emisión */}
-      <Modal visible={showEmisionModal} animationType="slide" transparent={true} onRequestClose={() => setShowEmisionModal(false)}>
+      <Modal visible={showClienteModal} animationType="fade" transparent={true} onRequestClose={() => setShowClienteModal(false)}>
+        <Pressable style={styles.pickerBackdrop} onPress={() => setShowClienteModal(false)} />
+        <View style={styles.listPickerModal}>
+          <SimplePickerList
+            data={CLIENTE_DATA}
+            currentValue={factura.clienteNombre}
+            onSelect={(selectedItem) => {
+              onChange('idCliente', selectedItem.value);
+              onChange('clienteNombre', selectedItem.label);
+              setShowClienteModal(false);
+            }}
+          />
+        </View>
+      </Modal>
+
+      {/* --- MODAL DE FECHA (FLOTANTE) --- */}
+      <Modal visible={showEmisionModal} animationType="fade" transparent={true} onRequestClose={() => setShowEmisionModal(false)}>
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowEmisionModal(false)} />
-        <View style={styles.pickerSheet}>
+        <View style={styles.datePickerModal}>
           <View style={styles.pickerHeader}>
             <TouchableOpacity onPress={() => {
               onChange('diaEmision', tempDiaEmision);
@@ -370,39 +325,43 @@ export default function FacturaFormView({
               <Text style={styles.pickerButtonText}>Hecho</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.jsDatePickerContainer}>
-            <TumblerWheel data={AÑOS_DATA} onValueChange={setTempAñoEmision} value={tempAñoEmision} />
-            <TumblerWheel data={MESES_DATA} onValueChange={setTempMesEmision} value={tempMesEmision} />
-            <TumblerWheel data={DIAS_DATA} onValueChange={setTempDiaEmision} value={tempDiaEmision} />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal Cliente */}
-      <Modal visible={showClienteModal} animationType="slide" transparent={true} onRequestClose={() => setShowClienteModal(false)}>
-        <Pressable style={styles.pickerBackdrop} onPress={() => setShowClienteModal(false)} />
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerHeader}>
-            <TouchableOpacity onPress={() => {
-              // Encontramos el objeto {label, value} basado en el label
-              const selectedData = CLIENTE_DATA.find(r => r.label === (tempCliente ? tempCliente.label : '')) || CLIENTE_DATA[0];
-              if (selectedData) {
-                onChange('idCliente', selectedData.value);
-                onChange('clienteNombre', selectedData.label);
-              }
-              setShowClienteModal(false);
-            }}>
-              <Text style={styles.pickerButtonText}>Hecho</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.jsPickerContainer}>
-            <TumblerWheel 
-              data={CLIENTE_LABELS} 
-              onValueChange={(label) => setTempCliente({ ...tempCliente, label })} 
-              value={tempCliente ? tempCliente.label : ''} 
-            />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
+          <View style={styles.dateModalContainer}>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Día</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempDiaEmision}
+                onChangeText={(text) => handleDiaChange(text, setTempDiaEmision)}
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="DD"
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Mes</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempMesEmision}
+                onChangeText={(text) => handleMesChange(text, setTempMesEmision)}
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="MM"
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Año</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempAñoEmision}
+                onChangeText={(text) => onChange('añoEmision', text.replace(/[^0-9]/g, ''))} // Solo números
+                keyboardType="numeric"
+                maxLength={4}
+                placeholder="AAAA"
+                placeholderTextColor="#999"
+              />
+            </View>
           </View>
         </View>
       </Modal>
@@ -419,6 +378,16 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     paddingHorizontal: 20,
     paddingTop: 10,
+  },
+  columnsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  leftColumn: {
+    width: '48%',
+  },
+  rightColumn: {
+    width: '48%',
   },
   inputContainer: { marginBottom: 18 },
   inputLabel: { 
@@ -447,33 +416,36 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   lockedInput: {
-    backgroundColor: "#e6e6e6",
-    color: "#555"
+    backgroundColor: "#e6e6e6"
   },
   multilineInput: { 
     height: 100,
     textAlignVertical: 'top'
   },
-  navButton: { 
-    flex: 1, 
-    borderRadius: 25, 
-    paddingVertical: 12, 
-    alignItems: "center", 
-    marginHorizontal: 5 
+  finalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end', 
+    marginTop: 30,
+    marginBottom: 40,
   },
-  backButton: { backgroundColor: "#006480" }, // Un color diferente para regresar
-  nextButton: { backgroundColor: "#77a7ab" }, // Color principal
-  navButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "600" },
-  buttonRow: { flexDirection: "row", marginTop: 25, marginBottom: 40 },
-  saveButton: { 
-    backgroundColor: "#77a7ab", 
-    borderRadius: 25, 
-    paddingVertical: 12, 
-    alignItems: "center", 
-    marginTop: 25 
+  finalButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    marginLeft: 10, 
+    alignItems: 'center',
   },
-  saveButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
-
+  regresarButton: {
+    backgroundColor: '#6c757d', 
+  },
+  guardarButton: {
+    backgroundColor: '#77a7ab', 
+  },
+  finalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
   // Estilos para el botón de archivo
   fileButton: {
     backgroundColor: '#FFFFFF',
@@ -487,78 +459,99 @@ const styles = StyleSheet.create({
   fileButtonText: {
     fontSize: 24, // Emoji más grande
   },
-
-  // --- Estilos del Picker Modal ---
   pickerBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
-  pickerSheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 30, // SafeArea para bottom
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: -3 },
-    shadowRadius: 5,
-  },
-  pickerHeader: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-    borderColor: '#CCC',
-    alignItems: 'flex-end',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  pickerButtonText: {
-    fontSize: 16,
-    color: "#007AFF", // Color iOS "Done"
-    fontWeight: "500",
-  },
-  jsPickerContainer: {
-    height: CONTAINER_HEIGHT,
-    position: 'relative',
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-  },
-  jsDatePickerContainer: {
-    flexDirection: "row",
-    height: CONTAINER_HEIGHT,
-    backgroundColor: '#FFFFFF',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  jsDatePickerColumn: {
-    flex: 1,
-    height: CONTAINER_HEIGHT,
-  },
-  pickerItem: {
-    height: ITEM_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pickerItemText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  pickerHighlight: {
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 20,
+
+  // --- ESTILOS DE LISTA SIMPLE FLOTANTE ---
+  listPickerModal: {
     position: 'absolute',
     top: '50%',
-    left: 10,
-    right: 10,
-    height: ITEM_HEIGHT,
-    marginTop: -ITEM_HEIGHT / 2,
-    backgroundColor: 'rgba(77, 77, 77, 0.05)',
+    left: '50%',
+    transform: [{ translateX: -175 }, { translateY: -150 }], 
+    width: 350, 
+    backgroundColor: '#2b3042',
+    borderRadius: 20,
+    elevation: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+    overflow: 'hidden', 
+  },
+  simplePickerContainer: {
+    maxHeight: 300, 
+    paddingVertical: 10, 
+  },
+  simplePickerItem: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#3a3f50', 
+  },
+  simplePickerItemText: {
+    color: '#f0f0f0', 
+    fontSize: 17,
+    textAlign: 'center',
+  },
+  simplePickerItemSelected: {
+    backgroundColor: '#3a3f50', 
+  },
+  simplePickerItemSelectedText: {
+    color: '#77a7ab', 
+    fontWeight: '600',
+  },
+
+  // --- ESTILOS DE FECHA FLOTANTE ---
+  datePickerModal: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -175 }, { translateY: -125 }], 
+    width: 350, 
+    backgroundColor: '#2b3042', 
+    borderRadius: 20,
+    elevation: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+    overflow: 'hidden', 
+  },
+  pickerHeader: { 
+    backgroundColor: '#3a3f50', 
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: '#5a5f70', 
+    alignItems: 'flex-end',
+  },
+  pickerButtonText: { 
+    fontSize: 16,
+    color: "#77a7ab", 
+    fontWeight: "600",
+  },
+  dateModalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 20,
+    paddingTop: 10,
+    paddingBottom: 20, 
+  },
+  dateInputColumn: {
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  dateInput: {
+    backgroundColor: '#3a3f50', 
+    color: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    textAlign: 'center',
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#5a5f70',
   },
 });

@@ -8,98 +8,103 @@ export default function ConsultarProyecto({ navigation }) {
 
   const proyectoLogic = useProyectoLogic({});
 
-  // ---------------------------
-  // Cuando se carga el proyecto encontrado
-  // ---------------------------
-  useEffect(() => {
-    if (proyectoEncontrado) {
-      proyectoLogic.setNombreProyecto(proyectoEncontrado.nombreProyecto);
-      proyectoLogic.setTipoProyecto(proyectoEncontrado.tipoProyecto);
+  // ... (Toda tu lógica de useEffect, handleBuscar, handleEditar no cambia) ...
+  
+  // ---------------------------
+  // Cuando se carga el proyecto encontrado
+  // ---------------------------
+  useEffect(() => {
+    if (proyectoEncontrado) {
+      proyectoLogic.setNombreProyecto(proyectoEncontrado.nombreProyecto);
+      proyectoLogic.setTipoProyecto(proyectoEncontrado.tipoProyecto);
 
-      // Fecha inicio
-      if (proyectoEncontrado.fechaInicio) {
-        const [año, mes, dia] = proyectoEncontrado.fechaInicio.split("-");
-        proyectoLogic.setAñoInicio(año);
-        proyectoLogic.setMesInicio(mes);
-        proyectoLogic.setDiaInicio(dia);
-      }
+      // Fecha inicio
+      if (proyectoEncontrado.fechaInicio) {
+        const [año, mes, dia] = proyectoEncontrado.fechaInicio.split("-");
+        proyectoLogic.setAñoInicio(año);
+        proyectoLogic.setMesInicio(mes);
+        proyectoLogic.setDiaInicio(dia);
+      }
 
-      // Fecha fin
-      if (proyectoEncontrado.fechaFin) {
-        const [año, mes, dia] = proyectoEncontrado.fechaFin.split("-");
-        proyectoLogic.setAñoFin(año);
-        proyectoLogic.setMesFin(mes);
-        proyectoLogic.setDiaFin(dia);
-      }
+      // Fecha fin
+      if (proyectoEncontrado.fechaFin) {
+        const [año, mes, dia] = proyectoEncontrado.fechaFin.split("-");
+        proyectoLogic.setAñoFin(año);
+        proyectoLogic.setMesFin(mes);
+        proyectoLogic.setDiaFin(dia);
+      }
 
-      proyectoLogic.setResponsable(proyectoEncontrado.responsable);
-      proyectoLogic.setEstado(proyectoEncontrado.estado);
-      proyectoLogic.setPrioridad(proyectoEncontrado.prioridad);
-      proyectoLogic.setDescripcion(proyectoEncontrado.Descripcion);
-      proyectoLogic.setRecursosList(proyectoEncontrado.RecursosList);
-    }
-  }, [proyectoEncontrado]);
+      proyectoLogic.setResponsable(proyectoEncontrado.responsable);
+      proyectoLogic.setEstado(proyectoEncontrado.estado);
+      proyectoLogic.setPrioridad(proyectoEncontrado.prioridad);
+      proyectoLogic.setDescripcion(proyectoEncontrado.Descripcion);
+      proyectoLogic.setRecursosList(proyectoEncontrado.RecursosList);
+    }
+  }, [proyectoEncontrado]);
 
-  // ---------------------------
-  // Simulación de búsqueda
-  // ---------------------------
-  const handleBuscar = () => {
-    if (!busqueda.trim()) {
-      Alert.alert("Búsqueda vacía", "Ingresa el nombre o ID del proyecto.");
-      return;
-    }
+  // ---------------------------
+  // Simulación de búsqueda
+  // ---------------------------
+  const handleBuscar = () => {
+    if (!busqueda.trim()) {
+      Alert.alert("Búsqueda vacía", "Ingresa el nombre o ID del proyecto.");
+      return;
+    }
 
-    const datosSimulados = {
-      idProyecto: "P001",
-      nombreProyecto: "CRM Empresarial",
-      tipoProyecto: "Software",
-      fechaInicio: "2025-01-10",
-      fechaFin: "2025-12-31",
-      responsable: "Alejandro Mex",
-      estado: "En progreso",
-      prioridad: "Alta",
-      RecursosList: ["PC", "Servidor", "Licencias"],
-      Auditoria: "Auditoría inicial completada",
-      Descripcion: "Sistema de gestión de clientes y ventas",
-    };
+    const datosSimulados = {
+      idProyecto: "P001",
+      nombreProyecto: "CRM Empresarial",
+      tipoProyecto: "Software",
+      fechaInicio: "2025-01-10",
+      fechaFin: "2025-12-31",
+      responsable: "Alejandro Mex",
+      estado: "En progreso",
+      prioridad: "Alta",
+      RecursosList: ["PC", "Servidor", "Licencias"],
+      Auditoria: "Auditoría inicial completada",
+      Descripcion: "Sistema de gestión de clientes y ventas",
+    };
 
-    setProyectoEncontrado(datosSimulados);
-  };
+    setProyectoEncontrado(datosSimulados);
+  };
 
-  const handleEditar = () => {
-    Alert.alert(
-      "Redirigiendo",
-      "Serás redirigido al apartado de edición",
-      [
-        {
-          text: "Aceptar",
-          onPress: () => {
-            navigation.navigate("EditarProyecto", { proyecto: proyectoEncontrado });
-          },
-        },
-      ]
-    );
-  };
+  const handleEditar = () => {
+    Alert.alert(
+      "Redirigiendo",
+      "Serás redirigido al apartado de edición",
+      [
+        {
+          text: "Aceptar",
+          onPress: () => {
+            navigation.navigate("EditarProyecto", { proyecto: proyectoEncontrado });
+          },
+        },
+      ]
+    );
+  };
 
-  // ---------------------------
-  // Construir fecha para mostrar
-  // ---------------------------
-  const fechaInicio = proyectoLogic.diaInicio && proyectoLogic.mesInicio && proyectoLogic.añoInicio
-    ? `${proyectoLogic.añoInicio}-${proyectoLogic.mesInicio.padStart(2,"0")}-${proyectoLogic.diaInicio.padStart(2,"0")}`
-    : "";
+  // ---------------------------
+  // Construir fecha para mostrar
+  // ---------------------------
+  const fechaInicio = proyectoLogic.diaInicio && proyectoLogic.mesInicio && proyectoLogic.añoInicio
+    ? `${proyectoLogic.añoInicio}-${proyectoLogic.mesInicio.padStart(2,"0")}-${proyectoLogic.diaInicio.padStart(2,"0")}`
+    : "";
 
-  const fechaFin = proyectoLogic.diaFin && proyectoLogic.mesFin && proyectoLogic.añoFin
-    ? `${proyectoLogic.añoFin}-${proyectoLogic.mesFin.padStart(2,"0")}-${proyectoLogic.diaFin.padStart(2,"0")}`
-    : "";
+  const fechaFin = proyectoLogic.diaFin && proyectoLogic.mesFin && proyectoLogic.añoFin
+    ? `${proyectoLogic.añoFin}-${proyectoLogic.mesFin.padStart(2,"0")}-${proyectoLogic.diaFin.padStart(2,"0")}`
+    : "";
+
 
   return (
-    <ScrollView style={styles.container}>
+    // Quitamos el ScrollView y el 'style.container' de aquí
+    // Usamos el 'mainContentArea' para centrar
+    <View style={styles.mainContentArea}>
       {/* 🔹 Campo de búsqueda */}
       <View style={styles.searchContainer}>
         <TextInput
-          style={styles.input}
+          style={styles.searchInput} // <-- Estilo actualizado
           placeholder="Buscar proyecto por nombre o ID"
-          placeholderTextColor="#95A5A6"
+          placeholderTextColor="#999" // <-- Color de placeholder
           value={busqueda}
           onChangeText={setBusqueda}
         />
@@ -134,7 +139,7 @@ export default function ConsultarProyecto({ navigation }) {
 
           <Text style={styles.label}>Descripción:</Text>
           <TextInput
-            style={[styles.input, { height: 80 }]}
+            style={[styles.input, styles.multilineInput]} // <-- Estilo multilinea
             value={proyectoLogic.Descripcion}
             editable={false}
             multiline
@@ -146,51 +151,69 @@ export default function ConsultarProyecto({ navigation }) {
           </TouchableOpacity>
         </View>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
+// --- ESTILOS ACTUALIZADOS AL TEMA OSCURO ---
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#F0F2F5" },
+  mainContentArea: {
+    width: "100%",
+    maxWidth: 960,
+    alignSelf: "center",
+    paddingHorizontal: 15,
+  },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#ECF0F1",
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
     marginBottom: 20,
   },
-  input: {
+  searchInput: {
     flex: 1,
-    fontSize: 16,
-    color: "#2C3E50",
-    borderWidth: 1,
+    backgroundColor: "#FFFFFF",
     borderColor: "#BDC3C7",
-    borderRadius: 8,
-    padding: 8,
-    marginTop: 5,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    fontSize: 15,
+    color: "#333",
   },
   searchButton: {
-    backgroundColor: "#3498DB",
-    paddingVertical: 8,
+    backgroundColor: "#77a7ab", // Color de acento
+    borderRadius: 12,
+    paddingVertical: 12, // Ajustado para misma altura
     paddingHorizontal: 15,
-    borderRadius: 8,
     marginLeft: 10,
   },
   searchButtonText: { color: "#fff", fontWeight: "600" },
   formContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    backgroundColor: "#3a3f50", // Fondo de tarjeta oscuro
+    borderRadius: 12,
     padding: 15,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
   },
-  label: { fontWeight: "700", marginTop: 10, color: "#2C3E50" },
+  label: { 
+    fontWeight: "600", 
+    marginTop: 10, 
+    color: "#ffffff", // Label blanco
+    marginBottom: 5,
+  },
+  input: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#BDC3C7",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    fontSize: 15,
+    color: "#333",
+  },
+  multilineInput: {
+    height: 80,
+    textAlignVertical: 'top'
+  },
   editButton: {
-    backgroundColor: "#F39C12",
+    backgroundColor: "#f39c12", // Color naranja
     marginTop: 20,
     paddingVertical: 12,
     borderRadius: 8,

@@ -1,249 +1,387 @@
-// src/view/Modulo1/editarcliente.jsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react"; // <-- Importamos useState
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Image,
-  ActivityIndicator,
-  FlatList,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Image,
+  ActivityIndicator,
+  FlatList,
+  Modal, // <-- Importamos Modal
+  Pressable, // <-- Importamos Pressable
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
-// CAMBIO: Se importa el formulario de Clientes
 import ClientesFormView from "../../view/Modulo 3/clientesform";
-// CAMBIO: Se importa el (futuro) hook de lógica para editar cliente
 import { useEditarClienteLogic } from "../../controller/Modulo 3/editarcliente";
 
-// CAMBIO: Renombrado el componente
 export default function EditarClienteView() {
-  const route = useRoute();
-  const navigation = useNavigation();
-  // CAMBIO: 'empleado' -> 'cliente'
-  const clienteDesdeConsulta = route.params?.cliente || null;
+  const route = useRoute();
+  const navigation = useNavigation();
+  const clienteDesdeConsulta = route.params?.cliente || null;
 
-  // CAMBIO: Se desestructuran las variables renombradas del nuevo hook
-  const {
-    terminoBusqueda,
-    setTerminoBusqueda,
-    clientes, // 'empleados' -> 'clientes'
-    clienteSeleccionado, // 'empleadoSeleccionado' -> 'clienteSeleccionado'
-    setClienteSeleccionado, // 'setEmpleadoSeleccionado' -> 'setClienteSeleccionado'
-    loading,
-    buscarCliente, // 'buscarEmpleado' -> 'buscarCliente'
-    seleccionarCliente, // 'seleccionarEmpleado' -> 'seleccionarCliente'
-    guardarCambios,
-    deseleccionarCliente, // 'deseleccionarEmpleado' -> 'deseleccionarCliente'
-  } = useEditarClienteLogic();
+  const {
+    terminoBusqueda,
+    setTerminoBusqueda,
+    clientes, 
+    clienteSeleccionado, 
+    setClienteSeleccionado, 
+    loading,
+    buscarCliente, 
+    seleccionarCliente, 
+    guardarCambios,
+    deseleccionarCliente,
+    // --- (Añadiremos modalInfo y closeModal cuando tengamos el .js) ---
+  } = useEditarClienteLogic();
 
-  // CAMBIO: Se actualiza el useEffect para 'cliente'
-  useEffect(() => {
-    if (clienteDesdeConsulta) {
-      setClienteSeleccionado(clienteDesdeConsulta);
-    }
-  }, [clienteDesdeConsulta]);
+  useEffect(() => {
+    if (clienteDesdeConsulta) {
+      // NOTA: Asumimos que el hook (editarcliente.js) formateará los datos.
+      setClienteSeleccionado(clienteDesdeConsulta); 
+    }
+  }, [clienteDesdeConsulta]);
 
-  // CAMBIO: Esta función actualiza el estado 'clienteSeleccionado'
-  const handleInputChange = (campo, valor) => {
-    setClienteSeleccionado({ ...clienteSeleccionado, [campo]: valor });
-  };
+  const handleInputChange = (campo, valor) => {
+    setClienteSeleccionado({ ...clienteSeleccionado, [campo]: valor });
+  };
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView nestedScrollEnabled contentContainerStyle={styles.scrollContainer}>
-        {/* Encabezado */}
-        <View style={styles.header}>
-          <Image
-            source={require("../../../assets/LOGO_BLANCO.png")}
-            style={styles.headerIcon}
-          />
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Text style={styles.backButtonText}>{"<"}</Text>
-          </TouchableOpacity>
-          {/* CAMBIO: Título actualizado */}
-          <Text style={styles.headerTitle}>Editar Cliente</Text>
-        </View>
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView 
+        nestedScrollEnabled 
+        style={styles.container}
+        contentContainerStyle={styles.scrollContainer}
+      >
+        {/* Encabezado */}
+        <View style={styles.header}>
+          <Image
+            source={require("../../../assets/LOGO_BLANCO.png")}
+            style={styles.headerIcon}
+          />
+          {/* Botón "<" del header eliminado */}
+          <Text style={styles.headerTitle}>Editar Cliente</Text>
+        </View>
 
-        <View style={styles.divider} />
+        <View style={styles.divider} />
 
-        {/* Campo de búsqueda (solo si no venimos desde consulta) */}
-        {/* CAMBIO: Condición actualizada a 'cliente' */}
-        {!clienteDesdeConsulta && !clienteSeleccionado && (
-          <>
-            {/* CAMBIO: Texto actualizado */}
-            <Text style={styles.label}>Buscar cliente:</Text>
-            <View style={styles.searchBox}>
-              <TextInput
-                style={styles.input}
-                placeholder="Ejemplo: Juan Pérez"
-                value={terminoBusqueda}
-                onChangeText={setTerminoBusqueda}
-              />
-              <TouchableOpacity
-                style={[styles.button, loading && { opacity: 0.6 }]}
-                // CAMBIO: 'buscarEmpleado' -> 'buscarCliente'
-                onPress={buscarCliente}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Buscar</Text>
-                )}
-              </TouchableOpacity>
+        {/* Contenedor principal para centrar */}
+        <View style={styles.mainContentArea}>
+          {!clienteDesdeConsulta && !clienteSeleccionado && (
+            <>
+              <Text style={styles.label}>Buscar cliente:</Text>
+              <View style={styles.searchBox}>
+                <TextInput
+                  style={styles.searchInput} // <-- ESTILO ACTUALIZADO
+                  placeholder="Ejemplo: Juan Pérez"
+                  placeholderTextColor="#999" // <-- Placeholder
+                  value={terminoBusqueda}
+                  onChangeText={setTerminoBusqueda}
+                />
+                <TouchableOpacity
+                  style={[styles.searchButton, loading && { opacity: 0.6 }]} // <-- ESTILO ACTUALIZADO
+                  onPress={buscarCliente}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.searchButtonText}>Buscar</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          {/* Lista de clientes */}
+          {clientes.length > 0 && !clienteSeleccionado && (
+            <View style={styles.recientesContainer}> 
+              <Text style={styles.recientesTitle}>Resultados de la Búsqueda</Text>
+                <FlatList
+                  data={clientes}
+                  keyExtractor={(item, index) =>
+                    item.id_cliente
+                      ? item.id_cliente.toString()
+                      : item.idCliente
+                      ? item.idCliente.toString()
+                      : `cliente-${index}` 
+                  }
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.recienteItem} // <-- ESTILO ACTUALIZADO
+                      onPress={() => seleccionarCliente(item)} >
+                      <Text style={styles.recienteItemText}>
+                        {item.nombre_cliente || item.nombreCliente}{" "}
+                        {item.apellido_paterno || item.apellidoPaterno}{" "}
+                        {item.apellido_materno || item.apellidoMaterno}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  ListEmptyComponent={() => (
+                    <Text style={{ color: "#fff", textAlign: "center", marginTop: 10 }}>
+                      No hay clientes para mostrar.
+                    </Text>
+                  )}
+                  scrollEnabled={false}
+                />
             </View>
-          </>
-        )}
+          )}
 
-        {/* Lista de clientes */}
-        {/* CAMBIO: 'empleados' -> 'clientes', 'empleadoSeleccionado' -> 'clienteSeleccionado' */}
-        {clientes.length > 0 && !clienteSeleccionado && (
-          <FlatList
-            // CAMBIO: 'empleados' -> 'clientes'
-            data={clientes}
-            keyExtractor={(item, index) =>
-              // CAMBIO: 'id_empleado' -> 'id_cliente', 'idEmpleado' -> 'idCliente'
-              item.id_cliente
-                ? item.id_cliente.toString()
-                : item.idCliente
-                  ? item.idCliente.toString()
-                  : `cliente-${index}` // 'empleado-' -> 'cliente-'
-            }
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.listItem}
-                // CAMBIO: 'seleccionarEmpleado' -> 'seleccionarCliente'
-                onPress={() => seleccionarCliente(item)} >
-                <Text style={styles.listText}>
-                  {/* CAMBIO: Campos actualizados a los del cliente */}
-                  {item.nombre_cliente || item.nombreCliente}{" "}
-                  {item.apellido_paterno || item.apellidoPaterno}{" "}
-                  {item.apellido_materno || item.apellidoMaterno}
-                </Text>
-              </TouchableOpacity>
-            )}
-            ListEmptyComponent={() => (
-              // CAMBIO: Texto actualizado
-              <Text style={{ color: "#fff", textAlign: "center", marginTop: 10 }}>
-                No hay clientes para mostrar.
-              </Text>
-            )}
-            scrollEnabled={false}
-          />
-        )}
+          {/* Formulario */}
+          {clienteSeleccionado && (
+            <View style={styles.resultContainer}>
+              {!clienteDesdeConsulta && (
+                <TouchableOpacity
+                  onPress={deseleccionarCliente}
+                  style={styles.regresarButton}
+                >
+                  <Text style={styles.regresarButtonText}>{"< Volver a la lista"}</Text>
+                </TouchableOpacity>
+              )}
+              <Text style={styles.resultTitle}>
+                Editar datos de{" "}
+                {clienteSeleccionado.nombreCliente ||
+                  clienteSeleccionado.nombre_cliente || 
+                "Cliente"}
+              </Text>
+              <ClientesFormView
+                modo="editar"
+                cliente={clienteSeleccionado}
+                editable
+                onChange={handleInputChange}
+                onGuardar={guardarCambios}
+                onRegresar={() => navigation.goBack()} // <-- Botón del form conectado
+              />
+            </View>
+          )}
+        </View>
+      </ScrollView>
 
-        {/* Formulario */}
-        {/* CAMBIO: 'empleadoSeleccionado' -> 'clienteSeleccionado' */}
-        {clienteSeleccionado && (
-          <View style={styles.resultContainer}>
-
-            {/* CAMBIO: Condición actualizada a 'cliente' */}
-            {!clienteDesdeConsulta && (
-              <TouchableOpacity
-                // CAMBIO: 'deseleccionarEmpleado' -> 'deseleccionarCliente'
-                onPress={deseleccionarCliente}
-                style={styles.regresarButton}
-              >
-                <Text style={styles.regresarButtonText}>{"🔙 Volver a la lista"}</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* CAMBIO: Título y campo actualizado */}
-            <Text style={styles.resultTitle}>
-              Editar datos de{" "}
-              {clienteSeleccionado.nombreCliente ||
-                clienteSeleccionado.nombre_cliente || // Añadida verificación por si viene de API
-                "Cliente"}
-            </Text>
-
-            {/* CAMBIO: Se usa ClientesFormView */}
-            <ClientesFormView
-              modo="editar"
-              // CAMBIO: 'empleado' -> 'cliente'
-              cliente={clienteSeleccionado}
-              editable
-              onChange={handleInputChange}
-              onGuardar={guardarCambios}
-            />
-
+      {/* --- MODAL DE ALERTA (Se conectará con el .js) --- */}
+      {/* <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalInfo.visible}
+        onRequestClose={closeModal}
+      >
+        <Pressable style={styles.pickerBackdrop} onPress={closeModal} />
+        <View style={styles.alertModalContainer}>
+          <Text style={styles.modalTitle}>{modalInfo.title}</Text>
+          <Text style={styles.modalMessage}>{modalInfo.message}</Text>
+          <View style={styles.modalButtonContainer}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonConfirm, { width: '100%' }]}
+              onPress={closeModal}
+            >
+              <Text style={styles.modalButtonText}>Aceptar</Text>
+            </TouchableOpacity>
           </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
-  );
+        </View>
+      </Modal> */}
+
+      {/* --- BOTÓN FLOTANTE DE REGRESO --- */}
+      <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.backButtonText}>Regresar</Text>
+      </TouchableOpacity>
+
+    </SafeAreaView>
+  );
 }
 
-// --- Estilos ---
-// (Sin cambios, según la instrucción)
+// --- ESTILOS ACTUALIZADOS ---
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#2b3042" },
-  scrollContainer: { padding: 20, flexGrow: 1 },
-  header: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  headerIcon: { width: 60, height: 80, resizeMode: "contain", tintColor: "#ffffff" },
+  safeArea: { flex: 1, backgroundColor: "#2b3042" },
+  container: {
+    flex: 1,
+  },
+  scrollContainer: { 
+    paddingTop: 5,
+    paddingBottom: 80, // Espacio para el botón flotante
+  },
+  header: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    marginBottom: 10,
+    paddingHorizontal: 15,
+  },
+  headerIcon: { 
+    width: 60, 
+    height: 80, 
+    resizeMode: "contain", 
+    tintColor: "#ffffff" 
+  },
+  headerTitle: {
+    fontSize: 23,
+    fontWeight: "700",
+    marginLeft: 15, 
+    color: "#ffffff",
+  },
+  divider: { 
+    height: 3, 
+    backgroundColor: "#d92a1c", 
+    marginVertical: 1,
+    marginBottom: 30,
+  },
+  mainContentArea: {
+    width: "100%",
+    maxWidth: 960,
+    alignSelf: "center",
+    paddingHorizontal: 15,
+  },
+  label: { 
+    fontSize: 16, 
+    fontWeight: "600", 
+    color: "#ffffff", 
+    marginBottom: 10 
+  },
+  searchBox: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    gap: 10 
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#BDC3C7",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    fontSize: 15,
+    color: "#333",
+  },
+  searchButton: {
+    backgroundColor: "#77a7ab",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+  },
+  searchButtonText: { color: "#fff", fontWeight: "600" },
+  // Estilos de "Recientes" / Lista de Búsqueda
+  recientesContainer: {
+    marginHorizontal: 0, 
+    marginTop: 20,
+    backgroundColor: "#3a3f50", 
+    borderRadius: 12,
+    padding: 15,
+  },
+  recientesTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    marginBottom: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#5a5f70",
+  },
+  recienteItem: {
+    backgroundColor: "#2b3042",
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  recienteItemText: {
+    color: "#f0f0f0",
+    fontSize: 16,
+  },
+  resultContainer: {
+    backgroundColor: "#3a3f50", // <-- CAMBIO
+    padding: 20,
+    borderRadius: 12,
+    marginTop: 20,
+    elevation: 2,
+  },
+  resultTitle: { 
+    fontSize: 18, 
+    fontWeight: "700", 
+    marginBottom: 10,
+    color: "#ffffff", // <-- CAMBIO
+  },
+  regresarButton: {
+    marginBottom: 15,
+    alignSelf: 'flex-start',
+  },
+  regresarButtonText: {
+    fontSize: 16,
+    color: "#77a7ab", // <-- CAMBIO
+    fontWeight: '500',
+  },
+  // --- BOTÓN FLOTANTE ---
   backButton: {
-    paddingHorizontal: 10,
-    justifyContent: "center",
-    alignItems: "center",
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: '#77a7ab', 
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25, 
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 4,
   },
   backButtonText: {
-    color: "#ffffff",
-    fontSize: 28,
-    fontWeight: "bold",
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  headerTitle: {
-    fontSize: 23,
-    fontWeight: "700",
-    marginLeft: 5,
-    color: "#ffffff",
-  },
-  divider: { height: 3, backgroundColor: "#d92a1c", marginVertical: 5 },
-  label: { fontSize: 16, fontWeight: "600", color: "#ffffff", marginBottom: 10 },
-  searchBox: { flexDirection: "row", alignItems: "center", gap: 10 },
-  input: {
+
+  // --- MODAL DE ALERTA (Estilos listos) ---
+  pickerBackdrop: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#D0D3D4",
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    padding: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
-  button: {
-    backgroundColor: "#77a7ab",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-  buttonText: { color: "#fff", fontWeight: "600" },
-  listItem: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-  },
-  listText: { fontSize: 16, fontWeight: "500", color: "#2C3E50" },
-  resultContainer: {
-    backgroundColor: "#fff",
+  alertModalContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -175 }, { translateY: -125 }], 
+    width: 350, 
+    backgroundColor: '#2b3042', 
+    borderRadius: 20,
     padding: 20,
-    borderRadius: 12,
-    marginTop: 20,
-    elevation: 2,
+    elevation: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
   },
-  resultTitle: { fontSize: 18, fontWeight: "700", marginBottom: 10 },
-  regresarButton: {
-    marginBottom: 15,
-    alignSelf: 'flex-start',
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#f0f0f0',
+    textAlign: 'center',
+    marginBottom: 10,
   },
-  regresarButtonText: {
-    fontSize: 18,
-    color: "#2b3042", 
-    fontWeight: '500',
+  modalMessage: {
+    fontSize: 16,
+    color: '#f0f0f0',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center', 
+  },
+  modalButton: {
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+  },
+  modalButtonConfirm: {
+    backgroundColor: '#77a7ab', 
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

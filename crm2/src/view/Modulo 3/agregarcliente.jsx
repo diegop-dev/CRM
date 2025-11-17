@@ -7,7 +7,8 @@ import ClientesFormView from "../../view/Modulo 3/clientesform";
 import { useAgregarClienteLogic } from "../../controller/Modulo 3/agregarcliente";
 
 // CAMBIO: Renombrado el componente
-export default function AgregarClienteView() {
+// --- 1. RECIBE { navigation } ---
+export default function AgregarClienteView({ navigation }) {
 
   // CAMBIO: Se usa el nuevo hook y se desestructura 'cliente'
   const { cliente, onChange, onGuardar } = useAgregarClienteLogic();
@@ -36,12 +37,14 @@ export default function AgregarClienteView() {
             - Se usa ClientesFormView.
             - Se pasa 'cliente' en lugar de 'empleado'.
             - Se usa modo="agregar" (que es el default en el nuevo form).
-          */}
+            */ }
           <ClientesFormView
             cliente={cliente}
             modo="agregar" 
             onChange={onChange} // La función handleClienteChange del hook
             onGuardar={onGuardar} // La función guardarNuevoCliente del hook
+            // --- 2. PASA LA FUNCIÓN DE NAVEGACIÓN ---
+            onRegresar={() => navigation.goBack()}
           />
         </View>
       </ScrollView>

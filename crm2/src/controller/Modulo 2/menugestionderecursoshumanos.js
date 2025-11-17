@@ -13,11 +13,6 @@ export const useMenuLogic = () => {
       image: require("../../../assets/icons/Modulo 2/SubModulos/Empleados/hombre-empleado-alt.png"),
     },
     {
-      title: "JCF",
-      screen: "MenuDeJCF",
-      image: require("../../../assets/icons/Modulo 2/SubModulos/JCF/usuario-graduado.png"),
-    },
-    {
       title: "Inventario",
       screen: "MenuDeInventario",
       image: require("../../../assets/icons/Modulo 2/SubModulos/Inventario/alt-de-inventario.png"),

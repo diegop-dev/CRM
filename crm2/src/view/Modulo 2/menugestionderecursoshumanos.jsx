@@ -47,7 +47,6 @@ export default function MenuGestionDeRecursosHumanosView({ navigation }) {
                 key={index}
                 style={[
                   styles.button,
-                  index === menuItems.length - 1 && styles.largeButton,
                 ]}
                 onPress={() => handleNavigation(item.screen)}
               >

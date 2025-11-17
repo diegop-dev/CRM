@@ -49,7 +49,6 @@ export default function MenuGestionDeUsuariosView({ navigation }) {
                 key={index}
                 style={[
                   styles.button,
-                  index === menuItems.length - 1 && styles.largeButton,
                 ]}
                 onPress={() => handleNavigation(item.screen)}
               >

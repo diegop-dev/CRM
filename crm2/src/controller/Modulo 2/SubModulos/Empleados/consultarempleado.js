@@ -1,100 +1,75 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Alert } from "react-native";
-import { API_URL } from "../../../../config/apiConfig";
+// Asegúrate de que esta ruta sea correcta desde la carpeta 'controller'
+import { API_URL } from "../../../../config/apiConfig"; 
 
-// --- INICIO DE LA ACTUALIZACIÓN ---
-// 1. AÑADIMOS LA FUNCIÓN FORMATEADORA
-function formatearEmpleado(e) {
-  if (!e) return null;
-
-  // Separamos la fecha (ej: "1926-01-01T...")
-  const fecha = e.fecha_nacimiento ? e.fecha_nacimiento.split("T")[0].split("-") : ["", "", ""];
-
-  // Usamos .trim() en todos los campos de texto para
-  // quitar los espacios en blanco al *cargarlos*.
-  return {
-    id_empleado: e.id_empleado || e.idEmpleado,
-    nombres: (e.nombres || "").trim(),
-    apellidoPaterno: (e.apellido_paterno || "").trim(),
-    apellidoMaterno: (e.apellido_materno || "").trim(),
-    diaNacimiento: fecha[2] || "",
-    mesNacimiento: fecha[1] || "",
-    añoNacimiento: fecha[0] || "",
-    sexo: (e.sexo || "").trim(),
-    rfc: (e.rfc || "").trim(),
-    curp: (e.curp || "").trim(),
-    nss: (e.nss || "").trim(),
-    telefono: (e.telefono || "").trim(),
-    correoElectronico: (e.correo_electronico || "").trim(),
-    calle: (e.calle || "").trim(),
-    colonia: (e.colonia || "").trim(),
-    ciudad: (e.ciudad || "").trim(),
-    estado: (e.estado || "").trim(),
-    codigoPostal: (e.codigo_postal || "").trim(),
-    rol: (e.rol || "").trim(),
-    estadoEmpleado: (e.estado_empleado || "").trim(),
-    nombreUsuario: (e.nombre_usuario || "").trim(),
-    contraseña: e.contraseña || "", // La contraseña puede tener espacios
-    observaciones: (e.observaciones || "").trim(),
-  };
-}
-// --- FIN DE LA ACTUALIZACIÓN ---
-
-
+// ESTE ES EL ÚNICO HOOK QUE DEBE HABER EN ESTE ARCHIVO
 export function useConsultarEmpleadoLogic() {
   const [nombreUsuario, setNombreUsuario] = useState("");
   const [empleado, setEmpleado] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [editable, setEditable] = useState(false);
+
+  // 'editable' siempre es false en "Consultar"
+  const editable = false; 
 
   const buscarEmpleado = async () => {
     if (!nombreUsuario.trim()) {
-      Alert.alert("Atención", "Ingrese un nombre de usuario para buscar.");
+      Alert.alert("Error", "Por favor, ingrese un nombre de usuario.");
       return;
     }
-
+    setLoading(true);
+    setEmpleado(null); // Limpia resultados anteriores
     try {
-      setLoading(true);
-      const response = await fetch(
-        `${API_URL}/empleados/buscar/usuario?termino=${encodeURIComponent(nombreUsuario)}`
-      );
+      // --- ESTA ES LA LÓGICA REAL (DEBES DESCOMENTARLA CUANDO TU API ESTÉ LISTA) ---
+      // const response = await fetch(`${API_URL}/empleados/buscar?usuario=${nombreUsuario}`);
+      // const data = await response.json();
+      
+      // if (data.success) {
+      //   setEmpleado(data.empleado); 
+      // } else {
+      //   Alert.alert("Error", data.message || "Empleado no encontrado.");
+      // }
 
-      const data = await response.json();
+      // --- DATOS SIMULADOS (BORRAR DESPUÉS) ---
+      const datosSimulados = {
+        id_empleado: 1,
+        nombres: "Juan",
+        apellido_paterno: "Pérez",
+        apellido_materno: "Gómez",
+        sexo: "Masculino",
+        rfc: "PEGO880101ABC",
+        curp: "PEGO880101HCS...",
+        nss: "12345678901",
+        fecha_nacimiento: "1988-01-10",
+        correo_electronico: "juan.perez@empresa.com",
+        telefono: "9991234567",
+        calle: "Av. Siempre Viva",
+        colonia: "Centro",
+        ciudad: "Mérida",
+        estado: "Yucatán",
+        pais: "México",
+        codigo_postal: "97000",
+        rol: "Vendedor",
+        estado_empleado: "Activo",
+        nombre_usuario: "jperez",
+      };
+      // Simulamos un retraso de la red
+      setTimeout(() => {
+        setEmpleado(datosSimulados);
+        setLoading(false);
+      }, 1000);
+      // --- FIN DE SIMULACIÓN ---
 
-      if (response.ok && data.success && data.empleado) {
-        // --- INICIO DE LA ACTUALIZACIÓN ---
-        // 2. Usamos la función formateadora
-        setEmpleado(formatearEmpleado(data.empleado)); // <-- ¡CAMBIO CLAVE!
-        // --- FIN DE LA ACTUALIZACIÓN ---
-        setEditable(false);
-      } else {
-        Alert.alert("Sin resultados", data.message || "No se encontró ningún empleado con ese usuario.");
-      }
     } catch (error) {
-      console.error("Error:", error);
-      Alert.alert("Error", "No se pudo obtener el empleado.");
-    } finally {
+      console.error("Error al buscar empleado:", error);
+      Alert.alert("Error de Conexión", error.message);
       setLoading(false);
     }
   };
 
-  const confirmarEdicion = () => {
-    Alert.alert(
-      "Confirmar edición",
-      "¿Desea editar la información de este empleado?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Sí, editar",
-          onPress: () => setEditable(true),
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
+  // Función para limpiar la selección y volver a la búsqueda
   const deseleccionarEmpleado = () => {
-   setEmpleado(null);
+    setEmpleado(null);
     setNombreUsuario("");
   };
 
@@ -105,7 +80,9 @@ export function useConsultarEmpleadoLogic() {
     loading,
     editable,
     buscarEmpleado,
-    confirmarEdicion,
     deseleccionarEmpleado,
   };
 }
+
+// ¡¡NO DEBE HABER NADA MÁS EN ESTE ARCHIVO!!
+// ¡¡NINGÚN 'export default', NINGÚN '<View>', NINGÚN 'StyleSheet'!!

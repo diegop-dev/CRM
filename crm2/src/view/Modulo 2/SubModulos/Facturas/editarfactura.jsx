@@ -1,12 +1,21 @@
 import React from "react";
-import { ScrollView, StyleSheet, View, Text, Image, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
+import { 
+  ScrollView, 
+  StyleSheet, 
+  View, 
+  Text, 
+  Image, 
+  TextInput, 
+  TouchableOpacity, 
+  ActivityIndicator 
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-// Importamos el FORMULARIO "TONTO" que ya creamos
+// Importamos el FORMULARIO
 import FacturaFormView from "./facturasform"; 
-// Importamos el HOOK de lógica que acabamos de crear
+// Importamos el HOOK de lógica
 import { useEditarFacturaLogic } from "../../../../controller/Modulo 2/SubModulos/Facturas/editarfactura"; 
 
-export default function EditarFacturaView() {
+export default function EditarFacturaView({ route, navigation }) { // <-- Añadido navigation
 
   // Usamos el hook para toda la lógica
   const {
@@ -26,13 +35,13 @@ export default function EditarFacturaView() {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#2b3042" }}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 80 }} // <-- Espacio para el botón flotante
         keyboardShouldPersistTaps="handled"
       >
         {/* Encabezado */}
         <View style={styles.header}>
           <Image
-            source={require("../../../../../assets/LOGO_BLANCO.png")} // Ajusta esta ruta
+            source={require("../../../../../assets/LOGO_BLANCO.png")} 
             style={styles.headerIcon}
           />
           <Text style={styles.headerTitle}>Editar Factura</Text>
@@ -47,8 +56,8 @@ export default function EditarFacturaView() {
             placeholderTextColor="#999"
             value={terminoBusqueda}
             onChangeText={setTerminoBusqueda}
-            editable={!factura} // No se puede editar si ya hay una factura cargada
-            keyboardType="numeric" // Ideal para folios numéricos
+            editable={!factura} 
+            keyboardType="numeric"
           />
 
           {/* Botón cambia entre "Buscar" y "Limpiar" */}
@@ -79,16 +88,16 @@ export default function EditarFacturaView() {
           <View style={{ flex: 1, marginTop: 20 }}>
             <FacturaFormView
               factura={factura}
-              modo="editar" // <-- ¡AQUÍ ESTÁ LA MAGIA!
+              modo="editar" 
               onChange={onChange}
               onGuardar={onGuardar}
-              clientes={clientesList} // Pasa la lista de clientes al formulario
+              clientes={clientesList} 
+              // onRegresar ya no se pasa aquí
             />
           </View>
         )}
 
         {/* --- Lista de Facturas Recientes --- */}
-        {/* Se muestra solo si NO hay una factura buscada y NO está cargando */}
         {!factura && !isLoading && (
           <View style={styles.recientesContainer}>
             <Text style={styles.recientesTitle}>
@@ -99,7 +108,6 @@ export default function EditarFacturaView() {
                 key={f.id_factura}
                 style={styles.recienteItem}
                 onPress={() => {
-                  // Al hacer clic, poblamos la barra de búsqueda Y buscamos
                   setTerminoBusqueda(f.numero_folio);
                   handleBuscarFactura(f.numero_folio);
                 }}
@@ -112,12 +120,20 @@ export default function EditarFacturaView() {
         )}
 
       </ScrollView>
+
+      {/* --- BOTÓN DE REGRESO FLOTANTE AÑADIDO --- */}
+      <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.backButtonText}>Regresar</Text>
+      </TouchableOpacity>
+
     </SafeAreaView>
   );
 }
 
 // --- Estilos ---
-// (Copiados de editarproyecto.jsx para consistencia)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -172,7 +188,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   limpiarButton: { 
-    backgroundColor: "#E74C3C", // Rojo para "Limpiar"
+    backgroundColor: "#E74C3C", 
   },
   searchButtonText: {
     color: "#FFFFFF",
@@ -180,7 +196,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   recientesContainer: {
-    marginHorizontal: 0,
+    marginHorizontal: 0, 
     marginTop: 20,
     backgroundColor: "#3a3f50", 
     borderRadius: 12,
@@ -207,9 +223,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
   },
-  recienteItemSubText: { // Estilo extra para el monto
+  recienteItemSubText: {
     color: "#bdc3c7",
     fontSize: 14,
     marginTop: 2,
+  },
+
+  // --- ESTILOS DEL BOTÓN DE REGRESO AÑADIDOS ---
+  backButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: '#77a7ab', 
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25, 
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 4,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

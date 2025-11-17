@@ -12,22 +12,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // --- CONSTANTES ---
-const DIAS_DATA = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
-const MESES_DATA = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
-const AÑOS_DATA = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
-
-// --- CONSTANTES AÑADIDAS ---
 const UNIDAD_MEDIDA_DATA = ["Pieza", "Kilogramo", "Litro", "Metro", "Caja", "Paquete"];
 const ESTADO_PRODUCTO_DATA = ["Excelente", "Bueno", "Regular", "Deteriorado", "En Reparación"];
-// --- FIN CONSTANTES AÑADIDAS ---
-
-const ITEM_HEIGHT = 44;
-const CONTAINER_HEIGHT = 220;
-const WHEEL_PADDING = (CONTAINER_HEIGHT - ITEM_HEIGHT) / 2;
-
+// (Constantes de Rueda eliminadas)
 
 // --- Componentes reutilizables ---
-// (No necesitan cambios)
 const FormInput = React.memo(
   ({ label, value, onChangeText, editable = true, multiline = false, onTouchDisabled, ...props }) => (
     <View style={styles.inputContainer}>
@@ -40,7 +29,7 @@ const FormInput = React.memo(
           style={[
             styles.textInput,
             multiline && styles.multilineInput,
-            !editable && { backgroundColor: "#FFFFFF" },
+            !editable && styles.lockedInput,
           ]}
           value={value}
           onChangeText={onChangeText}
@@ -63,7 +52,7 @@ const SelectInput = React.memo(({ label, value, onPress, editable = true, onTouc
         style={[
           styles.textInput,
           { justifyContent: "center" },
-          !editable && { backgroundColor: "#FFFFFF" },
+          !editable && styles.lockedInput,
         ]}
       >
         <Text style={value ? styles.textInput_value : styles.textInput_placeholder}>
@@ -74,249 +63,204 @@ const SelectInput = React.memo(({ label, value, onPress, editable = true, onTouc
   </TouchableOpacity>
 ));
 
-
-// --- Paso 1 ---
-// CAMBIO: Añadidos 'codigoInterno' y 'unidadMedida', y sus props 'on...'
-const Paso1 = React.memo(({ producto, onChange, editable, onTouchDisabled, onResponsablePress, onFechaIngresoPress, onUnidadMedidaPress }) => (
-  <>
-    <FormInput label="Nombre" value={producto.nombre} onChangeText={(val) => onChange('nombre', val)} editable={editable} onTouchDisabled={onTouchDisabled} />
-    {/* CAMPO AÑADIDO */}
-    <FormInput label="Código Interno" value={producto.codigoInterno} onChangeText={(val) => onChange('codigoInterno', val)} editable={editable} onTouchDisabled={onTouchDisabled} />
-    <FormInput label="Categoría" value={producto.categoria} onChangeText={(val) => onChange('categoria', val)} editable={editable} onTouchDisabled={onTouchDisabled} />
-    {/* CAMPO AÑADIDO */}
-    <SelectInput 
-      label="Unidad de Medida" 
-      value={producto.unidadMedida} 
-      onPress={onUnidadMedidaPress} 
-      editable={editable} 
-      onTouchDisabled={onTouchDisabled} 
-    />
-    <SelectInput 
-      label="Responsable de Registro" 
-      value={producto.responsableNombre || ""}
-      onPress={onResponsablePress} 
-      editable={editable} 
-      onTouchDisabled={onTouchDisabled} 
-    />
-    <SelectInput
-      label="Fecha de Ingreso"
-      value={
-        producto.diaIngreso && producto.mesIngreso && producto.añoIngreso
-          ? `${producto.diaIngreso}/${producto.mesIngreso}/${producto.añoIngreso}`
-          : ""
-      }
-      onPress={onFechaIngresoPress}
-      editable={editable}
-      onTouchDisabled={onTouchDisabled}
-    />
-  </>
-));
-
-// --- Paso 2 ---
-// CAMBIO: Añadido 'estado' y su prop 'onEstadoPress'
-const Paso2 = React.memo(({ producto, onChange, onGuardar, editable, modo, onTouchDisabled, onEstadoPress }) => (
-  <>
-    <FormInput 
-      label="Cantidad" 
-      value={producto.cantidad} 
-      onChangeText={(val) => onChange('cantidad', val)} 
-      editable={editable} 
-      onTouchDisabled={onTouchDisabled} 
-      keyboardType="numeric"
-    />
-    {/* CAMPO AÑADIDO */}
-    <SelectInput 
-      label="Estado" 
-      value={producto.estado} 
-      onPress={onEstadoPress} 
-      editable={editable} 
-      onTouchDisabled={onTouchDisabled} 
-    />
-    <FormInput 
-      label="Descripción" 
-      value={producto.descripcion} 
-      onChangeText={(val) => onChange('descripcion', val)} 
-      editable={editable} 
-      onTouchDisabled={onTouchDisabled} 
-      multiline 
-    />
-
-    {editable && (
-      <TouchableOpacity style={styles.saveButton} onPress={onGuardar}>
-        <Text style={styles.saveButtonText}>
-          {modo === "editar" ? "Guardar Cambios" : "Guardar"}
-        </Text>
-      </TouchableOpacity>
-    )}
-  </>
-));
-
-// --- Componente de Picker en JS ---
-const JSPickerItem = ({ label }) => (
-  <View style={styles.pickerItem}>
-    <Text style={styles.pickerItemText}>
-      {label}
-    </Text>
-  </View>
-);
-
-// --- Componente de Rueda Selectora ---
-const TumblerWheel = ({ data, onValueChange, value }) => {
-  const ref = React.useRef(null);
-  let initialIndex = data.indexOf(value);
-  if (initialIndex < 0) initialIndex = 0;
-  const initialOffset = initialIndex * ITEM_HEIGHT;
-
-  const handleScrollEnd = (e) => {
-    const y = e.nativeEvent.contentOffset.y;
-    const index = Math.round(y / ITEM_HEIGHT);
-    if (index >= 0 && index < data.length) {
-      const newValue = data[index];
-      onValueChange(newValue);
-    }
-  };
-
+// --- Componente de Lista Simple ---
+const SimplePickerList = ({ data, onSelect, currentValue }) => {
+  const isObjectList = (typeof data[0] === 'object' && data[0] !== null);
+  
   return (
-    <ScrollView
-      ref={ref}
-      style={styles.jsDatePickerColumn}
-      showsVerticalScrollIndicator={false}
-      snapToInterval={ITEM_HEIGHT}
-      decelerationRate="fast"
-      contentOffset={{ y: initialOffset }}
-      contentContainerStyle={{ 
-        paddingTop: WHEEL_PADDING, 
-        paddingBottom: WHEEL_PADDING
-      }}
-      onMomentumScrollEnd={handleScrollEnd}
-      onScrollEndDrag={handleScrollEnd}
-    >
-      {data.map((item, index) => <JSPickerItem key={`${item}_${index}`} label={item} />)}
+    <ScrollView style={styles.simplePickerContainer}>
+      {data.map((item, index) => {
+        const label = isObjectList ? item.label : item;
+        const isSelected = currentValue === label;
+
+        return (
+          <TouchableOpacity
+            key={index}
+            style={[styles.simplePickerItem, isSelected && styles.simplePickerItemSelected]}
+            onPress={() => onSelect(item)} 
+          >
+            <Text style={[
+              styles.simplePickerItemText, 
+              isSelected && styles.simplePickerItemSelectedText
+            ]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </ScrollView>
   );
 };
 
 
-// --- Principal ---
+// --- Componente Principal ---
 export default function ProductosFormView({ 
   producto = {}, 
   modo = "agregar", 
   onTouchDisabled, 
   onChange, 
   onGuardar,
+  onRegresar, // <-- NUEVA PROP
   empleados = [] 
 }) {
-  const [step, setStep] = useState(1);
+  // --- 'step' state eliminado ---
   const editable = modo !== "consultar";
 
+  // --- Estados de los Modales ---
   const [showResponsableModal, setShowResponsableModal] = useState(false);
   const [showFechaIngresoModal, setShowFechaIngresoModal] = useState(false);
-  // --- ESTADOS AÑADIDOS ---
   const [showUnidadMedidaModal, setShowUnidadMedidaModal] = useState(false);
   const [showEstadoModal, setShowEstadoModal] = useState(false);
 
-  const [tempResponsable, setTempResponsable] = useState(null);
+  // --- Estados Temporales de Fecha ---
   const [tempDia, setTempDia] = useState('');
   const [tempMes, setTempMes] = useState('');
   const [tempAño, setTempAño] = useState('');
-  // --- ESTADOS AÑADIDOS ---
-  const [tempUnidadMedida, setTempUnidadMedida] = useState('');
-  const [tempEstado, setTempEstado] = useState('');
 
-
-  // --- LÓGICA DEL PICKER DE RESPONSABLE (Mantenida) ---
+  // --- LÓGICA DEL PICKER DE RESPONSABLE ---
   const RESPONSABLE_DATA = empleados.map(emp => ({
     label: `${emp.nombres} ${emp.apellido_paterno}`, 
     value: emp.id_empleado
   }));
-  const RESPONSABLE_LABELS = RESPONSABLE_DATA.map(r => r.label);
-  // --- FIN LÓGICA RESPONSABLE ---
 
-
-  const openResponsableModal = () => {
-    const currentLabel = producto.responsableNombre || (RESPONSABLE_LABELS.length > 0 ? RESPONSABLE_LABELS[0] : '');
-    const currentValue = producto.idResponsable || (RESPONSABLE_DATA.length > 0 ? RESPONSABLE_DATA[0].value : '');
-    setTempResponsable({ label: currentLabel, value: currentValue });
-    setShowResponsableModal(true);
-  };
-
+  // --- Funciones para Abrir Modales ---
+  const openResponsableModal = () => setShowResponsableModal(true);
+  const openUnidadMedidaModal = () => setShowUnidadMedidaModal(true);
+  const openEstadoModal = () => setShowEstadoModal(true);
+  
   const openFechaIngresoModal = () => {
-    setTempDia(producto.diaIngreso || DIAS_DATA[0]);
-    setTempMes(producto.mesIngreso || MESES_DATA[0]);
-    setTempAño(producto.añoIngreso || AÑOS_DATA[0]);
+    setTempDia(producto.diaIngreso || '');
+    setTempMes(producto.mesIngreso || '');
+    setTempAño(producto.añoIngreso || '');
     setShowFechaIngresoModal(true);
   };
   
-  // --- FUNCIONES AÑADIDAS ---
-  const openUnidadMedidaModal = () => {
-    setTempUnidadMedida(producto.unidadMedida || UNIDAD_MEDIDA_DATA[0]);
-    setShowUnidadMedidaModal(true);
+  // --- Funciones de Validación de Fecha ---
+  const handleDiaChange = (text, setter) => {
+    const numericText = text.replace(/[^0-9]/g, ''); 
+    if (numericText === '') { setter(''); return; }
+    if (numericText === '0' || numericText === '00') { setter(numericText); return; }
+    const value = parseInt(numericText, 10);
+    if (value > 31) { setter('31'); } else { setter(numericText); }
   };
 
-  const openEstadoModal = () => {
-    setTempEstado(producto.estado || ESTADO_PRODUCTO_DATA[0]);
-    setShowEstadoModal(true);
+  const handleMesChange = (text, setter) => {
+    const numericText = text.replace(/[^0-9]/g, ''); 
+    if (numericText === '') { setter(''); return; }
+     if (numericText === '0' || numericText === '00') { setter(numericText); return; }
+    const value = parseInt(numericText, 10);
+    if (value > 12) { setter('12'); } else { setter(numericText); }
   };
-  // --- FIN FUNCIONES AÑADIDAS ---
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-start", paddingHorizontal: 20 }}
+        contentContainerStyle={styles.scrollContainer}
       >
-        {step === 1 && (
-          <Paso1
-            producto={producto}
-            onChange={onChange}
-            editable={editable}
-            onTouchDisabled={onTouchDisabled}
-            onResponsablePress={() => (editable ? openResponsableModal() : onTouchDisabled())}
-            onFechaIngresoPress={() => (editable ? openFechaIngresoModal() : onTouchDisabled())}
-            // --- PROP AÑADIDA ---
-            onUnidadMedidaPress={() => (editable ? openUnidadMedidaModal() : onTouchDisabled())}
-          />
+        
+        {/* --- NUEVO LAYOUT DE 2 COLUMNAS --- */}
+        <View style={styles.columnsContainer}>
+
+          {/* --- Columna Izquierda --- */}
+          <View style={styles.leftColumn}>
+            {producto.id_producto && (
+              <FormInput label="ID Producto" value={producto.id_producto.toString()} editable={false} />
+            )}
+            <FormInput label="Nombre" value={producto.nombre} onChangeText={(val) => onChange('nombre', val)} editable={editable} onTouchDisabled={onTouchDisabled} />
+            <FormInput label="Código Interno" value={producto.codigoInterno} onChangeText={(val) => onChange('codigoInterno', val)} editable={editable} onTouchDisabled={onTouchDisabled} />
+            <FormInput label="Categoría" value={producto.categoria} onChangeText={(val) => onChange('categoria', val)} editable={editable} onTouchDisabled={onTouchDisabled} />
+            <SelectInput 
+              label="Unidad de Medida" 
+              value={producto.unidadMedida} 
+              onPress={openUnidadMedidaModal} 
+              editable={editable} 
+              onTouchDisabled={onTouchDisabled} 
+            />
+          </View>
+
+          {/* --- Columna Derecha --- */}
+          <View style={styles.rightColumn}>
+             <FormInput 
+              label="Cantidad" 
+              value={producto.cantidad} 
+              onChangeText={(val) => onChange('cantidad', val)} 
+              editable={editable} 
+              onTouchDisabled={onTouchDisabled} 
+              keyboardType="numeric"
+            />
+            <SelectInput 
+              label="Estado" 
+              value={producto.estado} 
+              onPress={openEstadoModal} 
+              editable={editable} 
+              onTouchDisabled={onTouchDisabled} 
+            />
+            <SelectInput 
+              label="Responsable de Registro" 
+              value={producto.responsableNombre || ""}
+              onPress={openResponsableModal} 
+              editable={editable} 
+              onTouchDisabled={onTouchDisabled} 
+            />
+            <SelectInput
+              label="Fecha de Ingreso"
+              value={
+                producto.diaIngreso && producto.mesIngreso && producto.añoIngreso
+                  ? `${producto.diaIngreso}/${producto.mesIngreso}/${producto.añoIngreso}`
+                  : ""
+              }
+              onPress={openFechaIngresoModal}
+              editable={editable}
+              onTouchDisabled={onTouchDisabled}
+            />
+            <FormInput 
+              label="Descripción" 
+              value={producto.descripcion} 
+              onChangeText={(val) => onChange('descripcion', val)} 
+              editable={editable} 
+              onTouchDisabled={onTouchDisabled} 
+              multiline 
+              style={[styles.textInput, styles.multilineInput, { height: 120 }]}
+            />
+          </View>
+        </View>
+
+        {/* --- NUEVA FILA DE BOTONES FINALES --- */}
+        {editable && (
+          <View style={styles.finalButtonRow}>
+            <TouchableOpacity
+              style={[styles.finalButton, styles.regresarButton]}
+              onPress={onRegresar}
+            >
+              <Text style={styles.finalButtonText}>Regresar</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.finalButton, styles.guardarButton]}
+              onPress={onGuardar}
+            >
+              <Text style={styles.finalButtonText}>
+                {modo === "editar" ? "Guardar Cambios" : "Guardar"}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
 
-        {step === 2 && (
-          <Paso2 
-            producto={producto}
-            onChange={onChange}
-            onGuardar={onGuardar}
-            editable={editable} 
-            modo={modo}
-            onTouchDisabled={onTouchDisabled} 
-            // --- PROP AÑADIDA ---
-            onEstadoPress={() => (editable ? openEstadoModal() : onTouchDisabled())}
-          />
-        )}
-        
-        <View style={styles.buttonRow}>
-          {step > 1 && (
-            <TouchableOpacity style={[styles.navButton, styles.backButton]} onPress={() => setStep(step - 1)}>
-              <Text style={styles.navButtonText}>Regresar</Text>
-            </TouchableOpacity>
-          )}
-          {step < 2 && (
-            <TouchableOpacity style={[styles.navButton, styles.nextButton]} onPress={() => setStep(step + 1)}>
-              <Text style={styles.navButtonText}>Continuar</Text>
-            </TouchableOpacity>
-          )}
-        </View>
       </ScrollView>
 
-      {/* --- MODALES --- */}
+      {/* --- MODALES FLOTANTES --- */}
 
-      {/* --- MODAL FECHA INGRESO --- */}
+      {/* --- MODAL FECHA INGRESO (Mini-Form) --- */}
       <Modal
         visible={showFechaIngresoModal}
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         onRequestClose={() => setShowFechaIngresoModal(false)}
       >
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowFechaIngresoModal(false)} />
-        <View style={styles.pickerSheet}>
+        <View style={styles.datePickerModal}>
           <View style={styles.pickerHeader}>
             <TouchableOpacity onPress={() => {
               onChange('diaIngreso', tempDia);
@@ -327,87 +271,100 @@ export default function ProductosFormView({
               <Text style={styles.pickerButtonText}>Hecho</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.jsDatePickerContainer}>
-            <TumblerWheel data={DIAS_DATA} onValueChange={setTempDia} value={tempDia} />
-            <TumblerWheel data={MESES_DATA} onValueChange={setTempMes} value={tempMes} />
-            <TumblerWheel data={AÑOS_DATA} onValueChange={setTempAño} value={tempAño} />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
+          <View style={styles.dateModalContainer}>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Día</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempDia}
+                onChangeText={(text) => handleDiaChange(text, setTempDia)}
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="DD"
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Mes</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempMes}
+                onChangeText={(text) => handleMesChange(text, setTempMes)}
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="MM"
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.dateInputColumn}>
+              <Text style={styles.inputLabel}>Año</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={tempAño}
+                onChangeText={setTempAño}
+                keyboardType="numeric"
+                maxLength={4}
+                placeholder="AAAA"
+                placeholderTextColor="#999"
+              />
+            </View>
           </View>
         </View>
       </Modal>
 
-      {/* --- MODAL RESPONSABLE --- */}
-      <Modal visible={showResponsableModal} animationType="slide" transparent={true} onRequestClose={() => setShowResponsableModal(false)}>
+      {/* --- MODAL RESPONSABLE (Lista) --- */}
+      <Modal visible={showResponsableModal} animationType="fade" transparent={true} onRequestClose={() => setShowResponsableModal(false)}>
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowResponsableModal(false)} />
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerHeader}>
-            <TouchableOpacity onPress={() => {
-              const selectedLabel = tempResponsable ? tempResponsable.label : RESPONSABLE_LABELS[0];
-              const selectedData = RESPONSABLE_DATA.find(r => r.label === selectedLabel) || (RESPONSABLE_DATA.length > 0 ? RESPONSABLE_DATA[0] : {value: '', label: ''});
-              
-              onChange('idResponsable', selectedData.value); 
-              onChange('responsableNombre', selectedData.label); 
+        <View style={styles.listPickerModal}>
+          <SimplePickerList
+            data={RESPONSABLE_DATA}
+            currentValue={producto.responsableNombre}
+            onSelect={(selectedItem) => {
+              onChange('idResponsable', selectedItem.value); 
+              onChange('responsableNombre', selectedItem.label); 
               setShowResponsableModal(false);
-            }}>
-              <Text style={styles.pickerButtonText}>Hecho</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.jsPickerContainer}>
-            <TumblerWheel 
-              data={RESPONSABLE_LABELS} 
-              onValueChange={(label) => setTempResponsable({ ...tempResponsable, label })} 
-              value={tempResponsable ? tempResponsable.label : ''} 
-            />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
-          </View>
+            }}
+          />
         </View>
       </Modal>
 
-      {/* --- MODAL UNIDAD DE MEDIDA (AÑADIDO) --- */}
+      {/* --- MODAL UNIDAD DE MEDIDA (Lista) --- */}
       <Modal
         visible={showUnidadMedidaModal}
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         onRequestClose={() => setShowUnidadMedidaModal(false)}
       >
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowUnidadMedidaModal(false)} />
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerHeader}>
-            <TouchableOpacity onPress={() => {
-              onChange('unidadMedida', tempUnidadMedida);
+        <View style={styles.listPickerModal}>
+          <SimplePickerList
+            data={UNIDAD_MEDIDA_DATA}
+            currentValue={producto.unidadMedida}
+            onSelect={(selectedItem) => {
+              onChange('unidadMedida', selectedItem);
               setShowUnidadMedidaModal(false);
-            }}>
-              <Text style={styles.pickerButtonText}>Hecho</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.jsPickerContainer}>
-            <TumblerWheel data={UNIDAD_MEDIDA_DATA} onValueChange={setTempUnidadMedida} value={tempUnidadMedida} />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
-          </View>
+            }}
+          />
         </View>
       </Modal>
 
-      {/* --- MODAL ESTADO (AÑADIDO) --- */}
+      {/* --- MODAL ESTADO (Lista) --- */}
       <Modal
         visible={showEstadoModal}
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         onRequestClose={() => setShowEstadoModal(false)}
       >
         <Pressable style={styles.pickerBackdrop} onPress={() => setShowEstadoModal(false)} />
-        <View style={styles.pickerSheet}>
-          <View style={styles.pickerHeader}>
-            <TouchableOpacity onPress={() => {
-              onChange('estado', tempEstado);
+        <View style={styles.listPickerModal}>
+          <SimplePickerList
+            data={ESTADO_PRODUCTO_DATA}
+            currentValue={producto.estado}
+            onSelect={(selectedItem) => {
+              onChange('estado', selectedItem);
               setShowEstadoModal(false);
-            }}>
-              <Text style={styles.pickerButtonText}>Hecho</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.jsPickerContainer}>
-            <TumblerWheel data={ESTADO_PRODUCTO_DATA} onValueChange={setTempEstado} value={tempEstado} />
-            <View style={styles.pickerHighlight} pointerEvents="none" />
-          </View>
+            }}
+          />
         </View>
       </Modal>
 
@@ -416,173 +373,174 @@ export default function ProductosFormView({
 }
 
 // --- Estilos ---
-// (Tus estilos se quedan igual)
+// ¡NUEVO STYLESHEET! Copiado de proyectoform.jsx para unificar el diseño.
 const styles = StyleSheet.create({
-  inputContainer: { marginBottom: 20 },
-  inputLabel: { fontSize: 14, fontWeight: "600", color: "#ec0c0cff", marginBottom: 10 },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "flex-start",
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  columnsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  leftColumn: {
+    width: '48%',
+  },
+  rightColumn: {
+    width: '48%',
+  },
+  inputContainer: { marginBottom: 18 },
+  inputLabel: { 
+    fontSize: 14, 
+    fontWeight: "600", 
+    color: "#ffffff", // Label blanco
+    marginBottom: 8 
+  },
   textInput: {
     width: "100%",
     backgroundColor: "#FFFFFF",
     borderColor: "#BDC3C7",
     borderWidth: 1,
+    borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 15,
-    borderRadius: 25,
-    fontSize: 16,
-    color: '#333',
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
+    fontSize: 15,
+    color: "#333",
   },
   textInput_value: {
     color: '#333',
-    fontSize: 16,
+    fontSize: 15,
   },
   textInput_placeholder: {
     color: '#999',
-    fontSize: 16,
+    fontSize: 15,
+  },
+  lockedInput: {
+    backgroundColor: "#e6e6e6" // Color para campos no editables
   },
   multilineInput: { 
     height: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: 'top'
   },
-  navButton: {
-    flex: 1,
-    borderRadius: 25,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    alignItems: "center",
-    marginHorizontal: 5,
-  },
-  backButton: { backgroundColor: "#77a7ab" },
-  nextButton: { backgroundColor: "#006480" },
-  navButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
-  buttonRow: { flexDirection: "row", marginTop: 15, marginBottom: 30 },
-  saveButton: { backgroundColor: "#006480", borderRadius: 25, paddingVertical: 12, paddingHorizontal: 15, alignItems: "center", marginTop: 10 },
-  saveButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
-  alertBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  alertContainer: {
-    backgroundColor: "#FFFFFF",
-    width: "75%",
-    maxWidth: 300,
-    borderRadius: 14,
-    overflow: 'hidden',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 10,
-  },
-  alertTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-    color: "#000",
-    paddingTop: 20,
-    paddingHorizontal: 16,
-    paddingBottom: 5,
-  },
-  alertMessage: {
-    fontSize: 14,
-    fontWeight: "400",
-    textAlign: "center",
-    color: "#000",
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-  },
-  alertButtonContainer: {
-    borderTopWidth: 0.5,
-    borderColor: "rgba(0, 0, 0, 0.3)",
+  finalButtonRow: {
     flexDirection: 'row',
+    justifyContent: 'flex-end', 
+    marginTop: 30,
+    marginBottom: 40,
   },
-  alertButton: {
-    flex: 1,
+  finalButton: {
     paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    marginLeft: 10, 
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  alertButtonText: {
-    fontSize: 17,
-    color: "#007AFF",
-    fontWeight: "600",
+  regresarButton: {
+    backgroundColor: '#6c757d', 
+  },
+  guardarButton: {
+    backgroundColor: '#77a7ab', 
+  },
+  finalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
   },
   pickerBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
-  pickerSheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 30,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: -3 },
-    shadowRadius: 5,
-  },
-  pickerHeader: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-    borderColor: '#CCC',
-    alignItems: 'flex-end',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  pickerButtonText: {
-    fontSize: 16,
-    color: "#007AFF",
-    fontWeight: "500",
-  },
-  jsPickerContainer: {
-    height: CONTAINER_HEIGHT,
-    position: 'relative',
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-  },
-  jsDatePickerContainer: {
-    flexDirection: "row",
-    height: CONTAINER_HEIGHT,
-    backgroundColor: '#FFFFFF',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  jsDatePickerColumn: {
-    flex: 1,
-    height: CONTAINER_HEIGHT,
-  },
-  pickerItem: {
-    height: ITEM_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pickerItemText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  pickerHighlight: {
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 20,
+
+  // --- ESTILOS DE LISTA SIMPLE FLOTANTE ---
+  listPickerModal: {
     position: 'absolute',
     top: '50%',
-    left: 10,
-    right: 10,
-    height: ITEM_HEIGHT,
-    marginTop: -ITEM_HEIGHT / 2,
-    backgroundColor: 'rgba(77, 77, 77, 0.05)',
+    left: '50%',
+    transform: [{ translateX: -175 }, { translateY: -150 }], 
+    width: 350, 
+    backgroundColor: '#2b3042',
+    borderRadius: 20,
+    elevation: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+    overflow: 'hidden', 
+  },
+  simplePickerContainer: {
+    maxHeight: 300, 
+    paddingVertical: 10, 
+  },
+  simplePickerItem: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#3a3f50', 
+  },
+  simplePickerItemText: {
+    color: '#f0f0f0', 
+    fontSize: 17,
+    textAlign: 'center',
+  },
+  simplePickerItemSelected: {
+    backgroundColor: '#3a3f50', 
+  },
+  simplePickerItemSelectedText: {
+    color: '#77a7ab', 
+    fontWeight: '600',
+  },
+
+  // --- ESTILOS DE FECHA FLOTANTE ---
+  datePickerModal: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -175 }, { translateY: -125 }], 
+    width: 350, 
+    backgroundColor: '#2b3042', 
+    borderRadius: 20,
+    elevation: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+    overflow: 'hidden', 
+  },
+  pickerHeader: { 
+    backgroundColor: '#3a3f50', 
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: '#5a5f70', 
+    alignItems: 'flex-end',
+  },
+  pickerButtonText: { 
+    fontSize: 16,
+    color: "#77a7ab", 
+    fontWeight: "600",
+  },
+  dateModalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 20,
+    paddingTop: 10,
+    paddingBottom: 20, 
+  },
+  dateInputColumn: {
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  dateInput: {
+    backgroundColor: '#3a3f50', 
+    color: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    textAlign: 'center',
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#5a5f70',
   },
 });

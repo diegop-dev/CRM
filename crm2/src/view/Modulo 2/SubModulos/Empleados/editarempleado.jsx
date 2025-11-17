@@ -1,5 +1,4 @@
-// src/view/Modulo1/editarempleado.jsx
-import React, { useEffect } from "react";
+import React, { useState } from "react"; 
 import {
   View,
   Text,
@@ -9,225 +8,347 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
-  FlatList,
+  Modal, 
+  Pressable, 
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import EmpleadosFormView from "../Empleados/empleadosform";
-import { useEditarEmpleadoLogic } from "../../../../controller/Modulo 2/SubModulos/Empleados/editarempleado";
+// Esta es la única importación que haces al controlador
+import { useConsultarEmpleadoLogic } from "../../../../controller/Modulo 2/SubModulos/Empleados/consultarempleado";
 
-export default function EditarEmpleadoView() {
-  const route = useRoute();
+export default function ConsultarEmpleadoView() {
   const navigation = useNavigation();
-  const empleadoDesdeConsulta = route.params?.empleado || null;
 
-  // 👇 CAMBIO 1: Traemos las dos funciones de 'set' y la nueva de 'deseleccionar'
   const {
-    terminoBusqueda,
-    setTerminoBusqueda,
-    empleados,
-    empleadoSeleccionado,
-    setEmpleadoSeleccionado,  // <--- Para handleInputChange
-    setEmpleadoDesdeNavegacion, // <--- Para el useEffect
+    nombreUsuario,
+    setNombreUsuario,
+    empleado,
     loading,
+    editable,
     buscarEmpleado,
-    seleccionarEmpleado,
-    guardarCambios,
-    deseleccionarEmpleado,  // <--- 1. Importamos la nueva función
-  } = useEditarEmpleadoLogic();
+    deseleccionarEmpleado,
+  } = useConsultarEmpleadoLogic(); // <-- Se llama al hook
 
-  // CAMBIO 2: Usamos la función de formateo
-  useEffect(() => {
-    if (empleadoDesdeConsulta) {
-      setEmpleadoSeleccionado(empleadoDesdeConsulta);
+  // Estados del Modal
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [modalStep, setModalStep] = useState(1); 
+
+  // Handlers del Modal
+  const handleModalCancel = () => {
+    setModalVisible(false);
+  };
+  const handleModalConfirmStep1 = () => {
+    setModalStep(2); 
+  };
+  const handleModalConfirmStep2 = () => {
+    navigation.navigate("EditarEmpleado", { empleado });
+    setModalVisible(false);
+  };
+
+  // Función 'handleTouchDisabled' actualizada
+  const handleTouchDisabled = () => {
+    if (!editable && empleado) {
+      setModalStep(1); 
+      setModalVisible(true); 
     }
-  }, [empleadoDesdeConsulta]);
-
-  // Esta función es correcta, usa 'setEmpleadoSeleccionado'
-  const handleInputChange = (campo, valor) => {
-    setEmpleadoSeleccionado({ ...empleadoSeleccionado, [campo]: valor });
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView nestedScrollEnabled contentContainerStyle={styles.scrollContainer}>
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.scrollContainer} 
+      >
         {/* Encabezado */}
         <View style={styles.header}>
           <Image
             source={require("../../../../../assets/LOGO_BLANCO.png")}
             style={styles.headerIcon}
           />
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Text style={styles.backButtonText}>{"<"}</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Editar Empleado</Text>
+          <Text style={styles.headerTitle}>Consultar Empleado</Text>
         </View>
 
         <View style={styles.divider} />
 
-        {/* Campo de búsqueda (solo si no venimos desde consulta) */}
-        {!empleadoDesdeConsulta && !empleadoSeleccionado && ( // <-- Ocultamos si hay un empleado seleccionado
-          <>
-            <Text style={styles.label}>Buscar empleado:</Text>
-            <View style={styles.searchBox}>
-              <TextInput
-                style={styles.input}
-                placeholder="Ejemplo: Juan Pérez"
-                value={terminoBusqueda}
-                onChangeText={setTerminoBusqueda}
-              />
-              <TouchableOpacity
-                style={[styles.button, loading && { opacity: 0.6 }]}
-                onPress={buscarEmpleado}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Buscar</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
+        {/* Contenedor principal */}
+        <View style={styles.mainContentArea}>
+          {!empleado && (
+            <>
+              <Text style={styles.label}>Buscar por nombre de usuario:</Text>
+              <View style={styles.searchBox}>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Ejemplo: Herdia1"
+                  placeholderTextColor="#999"
+                  value={nombreUsuario} 
+                  onChangeText={setNombreUsuario} 
+                />
+                <TouchableOpacity
+                  style={[styles.searchButton, loading && { opacity: 0.6 }]}
+                  onPress={buscarEmpleado}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.searchButtonText}>Buscar</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
 
-        {/* Lista de empleados */}
-        {empleados.length > 0 && !empleadoSeleccionado && (
-          <FlatList
-            data={empleados}
-            keyExtractor={(item, index) =>
-              item.id_empleado
-                ? item.id_empleado.toString()
-                : item.idEmpleado
-                  ? item.idEmpleado.toString()
-                  : `empleado-${index}`
-            }
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.listItem}
-                onPress={() => seleccionarEmpleado(item)} >
-                <Text style={styles.listText}>
-                  {item.nombres || item.nombre}{" "}
-                  {item.apellido_paterno || item.apellidoPaterno}{" "}
-                  {item.apellido_materno || item.apellidoMaterno}
-                </Text>
-              </TouchableOpacity>
-            )}
-            ListEmptyComponent={() => (
-              <Text style={{ color: "#fff", textAlign: "center", marginTop: 10 }}>
-                No hay empleados para mostrar.
-              </Text>
-            )}
-            scrollEnabled={false}
-          />
-        )}
-
-        {/* Formulario */}
-        {empleadoSeleccionado && (
-          <View style={styles.resultContainer}>
-
-            {/* Añadimos el botón/texto de regreso */}
-            {!empleadoDesdeConsulta && ( // Solo mostrar si NO venimos desde 'consultar'
+          {/* Mostrar resultados */}
+          {empleado && (
+            <View style={styles.resultContainer}>
               <TouchableOpacity
                 onPress={deseleccionarEmpleado}
                 style={styles.regresarButton}
               >
-                <Text style={styles.regresarButtonText}>{"🔙 Volver a la lista"}</Text>
+                <Text style={styles.regresarButtonText}>{"< Volver a la búsqueda"}</Text>
               </TouchableOpacity>
-            )}
 
-            {/*  Usamos 'nombres' para el título */}
-            <Text style={styles.resultTitle}>
-              Editar datos de{" "}
-              {empleadoSeleccionado.nombres ||
-                 "Empleado"}
-            </Text>
+              <Text style={styles.resultTitle}>Datos del Empleado</Text>
 
-            <EmpleadosFormView
-              modo="editar"
-              empleado={empleadoSeleccionado}
-              editable
-              onChange={handleInputChange}
-              // Pasamos la función 'guardarCambios'
-              onGuardar={guardarCambios}
-            />
-
-          </View>
-        )}
+              <EmpleadosFormView
+                modo="consultar"
+                empleado={empleado}
+                onTouchDisabled={handleTouchDisabled}
+              />
+            </View>
+          )}
+        </View>
       </ScrollView>
+
+      {/* Modal de Alerta */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={handleModalCancel}
+      >
+        <Pressable style={styles.pickerBackdrop} onPress={handleModalCancel} />
+        <View style={styles.alertModalContainer}>
+          
+          {modalStep === 1 ? (
+            <>
+              <Text style={styles.modalTitle}>Modo consulta</Text>
+              <Text style={styles.modalMessage}>¿Desea editar este empleado?</Text>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={handleModalCancel}
+                >
+                  <Text style={styles.modalButtonText}>No</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  onPress={handleModalConfirmStep1}
+                >
+                  <Text style={styles.modalButtonText}>Sí</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.modalTitle}>Área segura</Text>
+              <Text style={styles.modalMessage}>¿Desea ser dirigido al área segura para editar empleado?</Text>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={handleModalCancel}
+                >
+                  <Text style={styles.modalButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  onPress={handleModalConfirmStep2}
+                >
+                  <Text style={styles.modalButtonText}>Confirmar</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+        </View>
+      </Modal>
+
+      {/* Botón flotante de regreso */}
+      <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.backButtonText}>Regresar</Text>
+      </TouchableOpacity>
+
     </SafeAreaView>
   );
 }
 
-// ... (tus estilos se quedan exactamente igual) ...
+// --- ESTILOS COMPLETOS ---
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#2b3042" },
-  scrollContainer: { padding: 20, flexGrow: 1 },
-  header: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  headerIcon: { width: 60, height: 80, resizeMode: "contain", tintColor: "#ffffff" },
-  backButton: {
-    paddingHorizontal: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  backButtonText: {
-    color: "#ffffff",
-    fontSize: 28,
-    fontWeight: "bold",
-  },
-  headerTitle: {
-    fontSize: 23,
-    fontWeight: "700",
-    marginLeft: 5,
-    color: "#ffffff",
-  },
-  divider: { height: 3, backgroundColor: "#d92a1c", marginVertical: 5 },
-  label: { fontSize: 16, fontWeight: "600", color: "#ffffff", marginBottom: 10 },
-  searchBox: { flexDirection: "row", alignItems: "center", gap: 10 },
-  input: {
+  container: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#D0D3D4",
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    padding: 10,
   },
-  button: {
-    backgroundColor: "#77a7ab",
+  scrollContainer: { 
+    paddingTop: 5,
+    paddingBottom: 80, 
+  },
+  header: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    marginBottom: 10,
+    paddingHorizontal: 15,
+  },
+  headerIcon: { 
+    width: 60, 
+    height: 80, 
+    resizeMode: "contain", 
+    tintColor: "#ffffff" 
+  },
+  headerTitle: { 
+    fontSize: 25, 
+    fontWeight: "700", 
+    marginLeft: 15, 
+    color: "#ffffff" 
+  },
+  divider: { 
+    height: 3, 
+    backgroundColor: "#d92a1c", 
+    marginVertical: 1,
+    marginBottom: 30,
+  },
+  mainContentArea: {
+    width: "100%",
+    maxWidth: 960,
+    alignSelf: "center",
+    paddingHorizontal: 15,
+  },
+  label: { 
+    fontSize: 16, 
+    fontWeight: "600", 
+    color: "#ffffff", 
+    marginBottom: 10,
+  },
+  searchBox: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    gap: 10 
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderColor: "#BDC3C7",
+    borderWidth: 1,
+    borderRadius: 12,
     paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+    paddingHorizontal: 15,
+    fontSize: 15,
+    color: "#333",
   },
-  buttonText: { color: "#fff", fontWeight: "600" },
-  listItem: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+  searchButton: {
+    backgroundColor: "#77a7ab",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
   },
-  listText: { fontSize: 16, fontWeight: "500", color: "#2C3E50" },
+  searchButtonText: { color: "#fff", fontWeight: "600" },
   resultContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: "#3a3f50", 
     padding: 20,
     borderRadius: 12,
     marginTop: 20,
     elevation: 2,
   },
-  resultTitle: { fontSize: 18, fontWeight: "700", marginBottom: 10 },
-
-  //  Añadimos los estilos para el botón de regreso
+  resultTitle: { 
+    fontSize: 18, 
+    fontWeight: "700", 
+    marginBottom: 10,
+    color: "#ffffff",
+  },
   regresarButton: {
     marginBottom: 15,
     alignSelf: 'flex-start',
   },
   regresarButtonText: {
-    fontSize: 18,
-    color: "#2b3042", 
+    fontSize: 16,
+    color: "#77a7ab", 
     fontWeight: '500',
+  },
+  backButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: '#77a7ab', 
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25, 
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 4,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  pickerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+  },
+  alertModalContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -175 }, { translateY: -125 }], 
+    width: 350, 
+    backgroundColor: '#2b3042', 
+    borderRadius: 20,
+    padding: 20,
+    elevation: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#f0f0f0',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#f0f0f0',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    width: '48%',
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#6c757d', 
+  },
+  modalButtonConfirm: {
+    backgroundColor: '#77a7ab', 
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

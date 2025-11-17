@@ -17,11 +17,6 @@ export const useMenuLogic = () => {
       screen: "Empleados",
       image: require("../../../assets/icons/Generales/lapiz-regla.png"),
     },
-    {
-      title: "...",
-      screen: "",
-      image: require("../../../assets/icons/Generales/lupa.png"),
-    },
   ];
 
   // Función de navegación
