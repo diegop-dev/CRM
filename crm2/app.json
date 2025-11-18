@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "CRM MULTIPLATAFORMA",
+    "slug": "JOSELIASNRMX",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/LOGO_AZUL.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/LOGO_AZUL.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/LOGO_AZUL.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/LOGO_AZUL.png",
+      "bundler": "metro"
+    }
+  }
+}
