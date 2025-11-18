@@ -164,6 +164,10 @@ export default function App() {
           <Stack.Screen name="ServiciosForm" component={ServiciosFormView} />
           <Stack.Screen name="ConsultarServicio" component={ConsultarServicioView} />
           <Stack.Screen name="MenuGestionDeUsuarios" component={MenuGestionDeUsuariosView} />
+          <Stack.Screen name="Administradores" component={AdministradoresView} />
+          <Stack.Screen name="Empleados" component={EmpleadosView} />
+
+
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

@@ -1,13 +1,12 @@
 import React from "react";
-import { ScrollView, StyleSheet, View, Text, Image, Modal, Pressable, TouchableOpacity } from "react-native"; // <-- Imports añadidos
+import { ScrollView, StyleSheet, View, Text, Image, Modal, Pressable, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import EmpleadosFormView from "../Empleados/empleadosform";
 import { useAgregarEmpleadoLogic } from "../../../../controller/Modulo 2/SubModulos/Empleados/agregarempleado";
 
-// --- 1. RECIBE { navigation } ---
 export default function AgregarEmpleadoView({ navigation }) {
 
-  // --- Se obtienen los nuevos props del modal ---
+  // --- Obtenemos los props del modal ---
   const { empleado, onChange, onGuardar, modalInfo, closeModal } = useAgregarEmpleadoLogic();
 
   return (
@@ -34,13 +33,13 @@ export default function AgregarEmpleadoView({ navigation }) {
             modo="crear" 
             onChange={onChange} 
             onGuardar={onGuardar} 
-            // --- 2. SE PASA LA FUNCIÓN de 'goBack' ---
+            // --- Botón Regresar conectado ---
             onRegresar={() => navigation.goBack()}
           />
         </View>
       </ScrollView>
 
-      {/* --- 3. MODAL DE ALERTA AÑADIDO --- */}
+      {/* --- Modal de Alerta --- */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -52,7 +51,6 @@ export default function AgregarEmpleadoView({ navigation }) {
           <Text style={styles.modalTitle}>{modalInfo.title}</Text>
           <Text style={styles.modalMessage}>{modalInfo.message}</Text>
           <View style={styles.modalButtonContainer}>
-            {/* Este modal solo necesita un botón de "Aceptar" */}
             <TouchableOpacity
               style={[styles.modalButton, styles.modalButtonConfirm, { width: '100%' }]}
               onPress={closeModal}
@@ -98,7 +96,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
 
-  // --- 4. ESTILOS DE MODAL AÑADIDOS ---
+  // --- Estilos de Modal ---
   pickerBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.4)",
@@ -134,7 +132,7 @@ const styles = StyleSheet.create({
   },
   modalButtonContainer: {
     flexDirection: 'row',
-    justifyContent: 'center', // Centramos el único botón
+    justifyContent: 'center', 
   },
   modalButton: {
     borderRadius: 20,

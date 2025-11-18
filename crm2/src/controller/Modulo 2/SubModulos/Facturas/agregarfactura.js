@@ -1,56 +1,53 @@
 import { useState, useEffect } from "react";
-import { Alert } from "react-native";
-import { API_URL } from "../../../../config/apiConfig"; // Asumo que tienes esto
-
-// Función para crear un objeto de factura vacío
+// import { Alert } from "react-native"; // <-- Eliminamos Alert
+import { API_URL } from "../../../../config/apiConfig";
+// (Función crearFacturaVacia no cambia)
 function crearFacturaVacia() {
   return {
-    id_factura: "", // El backend lo generará
+    id_factura: "", 
     numeroFolio: "",
     diaEmision: "",
     mesEmision: "",
     añoEmision: "",
-    idCliente: "", // Guardamos el ID del cliente
-    clienteNombre: "", // Guardamos el nombre para mostrarlo en el picker
+    idCliente: "", 
+    clienteNombre: "", 
     montoTotal: "",
     metodoPago: "",
-    responsableRegistro: "", // Campo manual por ahora
-    // 'archivos' se manejaría por separado, usualmente no en el mismo JSON
+    responsableRegistro: "", 
   };
 }
 
 export function useAgregarFacturaLogic() {
-  // Estado para el objeto factura
   const [factura, setFactura] = useState(crearFacturaVacia());
-  
-  // Estado para la lista de clientes (para el picker)
   const [clientesList, setClientesList] = useState([]);
+  
+  // --- NUEVO: Estado para el modal de alerta ---
+  const [modalInfo, setModalInfo] = useState({ visible: false, title: "", message: "" });
 
   // --- EFECTO PARA CARGAR CLIENTES ---
   useEffect(() => {
     async function fetchClientes() {
       try {
-        // Asumimos que tienes una ruta para traer todos los clientes
         const response = await fetch(`${API_URL}/clientes/todos`); 
         if (!response.ok) {
           throw new Error("No se pudo cargar la lista de clientes");
         }
         const data = await response.json();
         if (data.success) {
-          // Asumimos que la data.clientes es un array
           setClientesList(data.clientes); 
         } else {
-          Alert.alert("Error", data.message || "Error al cargar clientes.");
+          // --- CAMBIO: Usamos el modal ---
+          setModalInfo({ visible: true, title: "Error", message: data.message || "Error al cargar clientes." });
         }
       } catch (error) {
         console.error("Error al cargar clientes:", error);
-        Alert.alert("Error de Conexión", error.message);
+        // --- CAMBIO: Usamos el modal ---
+        setModalInfo({ visible: true, title: "Error de Conexión", message: error.message });
       }
     }
     fetchClientes();
-  }, []); // El array vacío asegura que solo se ejecute una vez
+  }, []); 
 
-  // Función genérica para actualizar el estado de la factura
   const handleFacturaChange = (key, value) => {
     setFactura(prevState => ({
       ...prevState,
@@ -58,15 +55,17 @@ export function useAgregarFacturaLogic() {
     }));
   };
 
-  // Función para guardar la factura
   const guardarNuevaFactura = async () => {
-    // --- Validación simple ---
     if (!factura.numeroFolio || !factura.idCliente || !factura.montoTotal || !factura.metodoPago) {
-      Alert.alert("Campos incompletos", "Por favor, llene Folio, Cliente, Monto y Método de Pago.");
+      // --- CAMBIO: Usamos el modal ---
+      setModalInfo({ 
+        visible: true, 
+        title: "Campos incompletos", 
+        message: "Por favor, llene Folio, Cliente, Monto y Método de Pago." 
+      });
       return;
     }
 
-    // --- Preparar datos para el backend ---
     const fechaEmision = factura.diaEmision && factura.mesEmision && factura.añoEmision
       ? `${factura.añoEmision}-${factura.mesEmision.padStart(2, "0")}-${factura.diaEmision.padStart(2, "0")}`
       : null;
@@ -75,13 +74,12 @@ export function useAgregarFacturaLogic() {
       numeroFolio: factura.numeroFolio,
       fechaEmision: fechaEmision,
       idCliente: factura.idCliente,
-      montoTotal: parseFloat(factura.montoTotal) || 0, // Aseguramos que sea un número
+      montoTotal: parseFloat(factura.montoTotal) || 0, 
       metodoPago: factura.metodoPago,
       responsableRegistro: factura.responsableRegistro.trim(),
     };
 
     try {
-      // Creamos la nueva ruta del backend para facturas
       const response = await fetch(`${API_URL}/facturas/guardar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,22 +89,43 @@ export function useAgregarFacturaLogic() {
       const data = await response.json();
 
       if (!response.ok || data.success === false) {
-        Alert.alert("Error al guardar", data.message || "No se pudo crear la factura.");
+        // --- CAMBIO: Usamos el modal ---
+        setModalInfo({ 
+          visible: true, 
+          title: "Error al guardar", 
+          message: data.message || "No se pudo crear la factura."
+        });
       } else {
-        Alert.alert("Éxito", "Factura guardada correctamente.");
-        // Limpiamos el formulario
+        // --- CAMBIO: Usamos el modal ---
+        setModalInfo({ 
+          visible: true, 
+          title: "Éxito", 
+          message: "Factura guardada correctamente."
+        });
         setFactura(crearFacturaVacia());
       }
     } catch (error) {
       console.error("Error al guardar factura:", error);
-      Alert.alert("Error de Conexión", "No se pudo conectar con el servidor.");
+      // --- CAMBIO: Usamos el modal ---
+      setModalInfo({ 
+        visible: true, 
+        title: "Error de Conexión", 
+        message: "No se pudo conectar con el servidor."
+      });
     }
+  };
+
+  // --- NUEVO: Función para cerrar el modal ---
+  const closeModal = () => {
+    setModalInfo({ visible: false, title: "", message: "" });
   };
 
   return {
     factura,
-    clientesList, // Pasamos la lista de clientes al formulario
+    clientesList, 
     onChange: handleFacturaChange,
     onGuardar: guardarNuevaFactura,
+    modalInfo, // <-- Exportamos el estado del modal
+    closeModal, // <-- Exportamos la función de cierre
   };
 }

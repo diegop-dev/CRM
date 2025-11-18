@@ -15,8 +15,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 // --- CONSTANTES DE DATOS ---
 const METODO_PAGO_DATA = ["Efectivo", "Tarjeta", "Transferencia"];
 
-// --- Componentes reutilizables (Sin cambios) ---
-const FormInput = React.memo(({ label, value, onChangeText, editable = true, multiline = false, ...props }) => (
+// --- Componentes reutilizables ---
+// AÑADIMOS onFocus y onBlur a los props que recibe FormInput
+const FormInput = React.memo(({ label, value, onChangeText, editable = true, multiline = false, onFocus, onBlur, ...props }) => (
   <View style={styles.inputContainer}>
     <Text style={styles.inputLabel}>{label}</Text>
     <TextInput
@@ -31,6 +32,8 @@ const FormInput = React.memo(({ label, value, onChangeText, editable = true, mul
       multiline={multiline}
       textAlignVertical={multiline ? "top" : "center"}
       blurOnSubmit={false}
+      onFocus={onFocus} // <-- AÑADIDO
+      onBlur={onBlur} // <-- AÑADIDO
       placeholderTextColor="#999"
       {...props}
     />
@@ -56,7 +59,7 @@ const SelectInput = React.memo(({ label, value, onPress, editable = true }) => (
   </TouchableOpacity>
 ));
 
-// --- Componente de Lista Simple (Sin cambios) ---
+// --- Componente de Lista Simple ---
 const SimplePickerList = ({ data, onSelect, currentValue }) => {
   const isObjectList = (typeof data[0] === 'object' && data[0] !== null);
   
@@ -85,7 +88,7 @@ const SimplePickerList = ({ data, onSelect, currentValue }) => {
   );
 };
 
-// --- Formateador de Moneda (Sin cambios) ---
+// --- Formateador de Moneda ---
 const formatCurrency = (value) => {
   const cleanValue = (value || "").toString().replace(/[^0-9.]/g, '');
   if (cleanValue === "" || cleanValue === ".") return { display: "$ 0.00 MXN", numeric: "" };
@@ -101,8 +104,6 @@ const formatCurrency = (value) => {
   return { display, numeric: cleanValue };
 };
 
-// --- Componentes "Paso1" y "Paso2" eliminados ---
-
 
 // --- Componente Principal ---
 export default function FacturaFormView({
@@ -110,11 +111,10 @@ export default function FacturaFormView({
   modo = "crear",
   onChange,
   onGuardar,
-  onRegresar, // <-- NUEVA PROP
+  onRegresar, 
   clientes = [] 
 }) {
   
-  // --- 'step' state eliminado ---
   const editable = modo !== "consultar";
 
   // --- Estados de los Modales ---
@@ -143,23 +143,35 @@ export default function FacturaFormView({
   const openMetodoPagoModal = () => setShowMetodoPagoModal(true);
   const openClienteModal = () => setShowClienteModal(true);
 
-  // --- Lógica de formato de monto (Sin cambios) ---
+  // --- LÓGICA DE MONTO (CORREGIDA) ---
   const [displayMonto, setDisplayMonto] = useState(formatCurrency(factura.montoTotal).display);
+
   const handleMontoChange = (text) => {
-    const { display, numeric } = formatCurrency(text);
-    setDisplayMonto(display);
-    onChange('montoTotal', numeric);
+    // Solo permitir números y un punto decimal
+    const numericText = text.replace(/[^0-9.]/g, ''); 
+    setDisplayMonto(numericText); // Muestra el número simple mientras escribe
+    onChange('montoTotal', numericText); // Actualiza el estado principal
   };
+  
   const handleMontoBlur = () => {
-    setDisplayMonto(formatCurrency(factura.montoTotal).display);
+    // Al salir, formatea bonito el valor que está en el estado
+    const { display } = formatCurrency(factura.montoTotal); 
+    setDisplayMonto(display); // Muestra el valor formateado
   };
+
+  const handleMontoFocus = () => {
+      // Al entrar, muestra el número simple para editar
+      setDisplayMonto(factura.montoTotal);
+  };
+  // --- FIN LÓGICA DE MONTO ---
+
 
   // --- Lógica de Archivo (Sin cambios) ---
   const handleSubirArchivo = () => {
     Alert.alert("Subir Archivo", "Aquí se abriría la librería de archivos 📁");
   };
 
-  // --- Funciones de Validación de Fecha ---
+  // --- Funciones de Validación de Fecha (Sin cambios) ---
   const handleDiaChange = (text, setter) => {
     const numericText = text.replace(/[^0-9]/g, ''); 
     if (numericText === '') { setter(''); return; }
@@ -184,7 +196,7 @@ export default function FacturaFormView({
         contentContainerStyle={styles.scrollContainer}
       >
         
-        {/* --- NUEVO LAYOUT DE 2 COLUMNAS --- */}
+        {/* --- LAYOUT DE 2 COLUMNAS --- */}
         <View style={styles.columnsContainer}>
 
           {/* --- Columna Izquierda --- */}
@@ -210,20 +222,21 @@ export default function FacturaFormView({
                   ? `${factura.diaEmision}/${factura.mesEmision}/${factura.añoEmision}`
                   : ""
               }
-              onPress={openEmisionModal} // <-- Modal flotante de fecha
+              onPress={openEmisionModal} 
               editable={editable}
             />
             <SelectInput 
               label="Cliente / Proveedor + RFC" 
               value={factura.clienteNombre || ""}
-              onPress={openClienteModal} // <-- Modal flotante de lista
+              onPress={openClienteModal} 
               editable={editable} 
             />
             <FormInput
               label="Monto Total"
-              value={displayMonto} 
-              onChangeText={handleMontoChange} 
-              onBlur={handleMontoBlur} 
+              value={displayMonto} // <-- CORREGIDO: Usa el estado 'displayMonto'
+              onChangeText={handleMontoChange} // <-- CORREGIDO
+              onBlur={handleMontoBlur} // <-- AÑADIDO
+              onFocus={handleMontoFocus} // <-- AÑADIDO
               editable={editable}
               keyboardType="numeric"
               placeholder="$ 0.00 MXN"
@@ -231,7 +244,7 @@ export default function FacturaFormView({
             <SelectInput 
               label="Método de Pago" 
               value={factura.metodoPago} 
-              onPress={openMetodoPagoModal} // <-- Modal flotante de lista
+              onPress={openMetodoPagoModal} 
               editable={editable} 
             />
           </View>
@@ -256,7 +269,7 @@ export default function FacturaFormView({
           </View>
         </View>
 
-        {/* --- NUEVA FILA DE BOTONES FINALES --- */}
+        {/* --- FILA DE BOTONES FINALES --- */}
         {editable && (
           <View style={styles.finalButtonRow}>
             <TouchableOpacity
@@ -355,7 +368,8 @@ export default function FacturaFormView({
               <TextInput
                 style={styles.dateInput}
                 value={tempAñoEmision}
-                onChangeText={(text) => onChange('añoEmision', text.replace(/[^0-9]/g, ''))} // Solo números
+                // --- ¡CORREGIDO! ---
+                onChangeText={(text) => setTempAñoEmision(text.replace(/[^0-9]/g, ''))} 
                 keyboardType="numeric"
                 maxLength={4}
                 placeholder="AAAA"
@@ -371,7 +385,7 @@ export default function FacturaFormView({
 }
 
 // --- Estilos ---
-// (Copiados de proyectoform.jsx para consistencia)
+// (Los estilos no cambian)
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
@@ -457,14 +471,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fileButtonText: {
-    fontSize: 24, // Emoji más grande
+    fontSize: 24, 
   },
   pickerBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
-
-  // --- ESTILOS DE LISTA SIMPLE FLOTANTE ---
   listPickerModal: {
     position: 'absolute',
     top: '50%',
@@ -502,8 +514,6 @@ const styles = StyleSheet.create({
     color: '#77a7ab', 
     fontWeight: '600',
   },
-
-  // --- ESTILOS DE FECHA FLOTANTE ---
   datePickerModal: {
     position: 'absolute',
     top: '50%',

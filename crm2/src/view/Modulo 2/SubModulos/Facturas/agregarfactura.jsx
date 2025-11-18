@@ -1,16 +1,15 @@
 import React from "react";
-import { ScrollView, StyleSheet, View, Text, Image } from "react-native";
+// --- 1. Imports añadidos ---
+import { ScrollView, StyleSheet, View, Text, Image, Modal, Pressable, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-// Importamos el componente de formulario
-import FacturaFormView from "./facturasform"; // Asegúrate que el nombre 'facturasform' sea correcto
-// Importamos el hook de lógica
+import FacturaFormView from "./facturasform"; 
 import { useAgregarFacturaLogic } from "../../../../controller/Modulo 2/SubModulos/Facturas/agregarfactura";
 
-// --- 1. RECIBE { navigation } ---
+// --- 2. RECIBE { navigation } ---
 export default function AgregarFacturaView({ navigation }) {
 
-  // Usamos el hook para obtener el estado y las funciones
-  const { factura, clientesList, onChange, onGuardar } = useAgregarFacturaLogic();
+  // --- 3. Obtenemos los nuevos props del modal ---
+  const { factura, clientesList, onChange, onGuardar, modalInfo, closeModal } = useAgregarFacturaLogic();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#2b3042" }}>
@@ -33,15 +32,38 @@ export default function AgregarFacturaView({ navigation }) {
         <View style={{ flex: 1 }}>
           <FacturaFormView
             factura={factura}
-            modo="crear"
+            modo="crear" // <-- Corregido a "crear" (o "agregar" si así lo defines)
             onChange={onChange}
             onGuardar={onGuardar}
             clientes={clientesList} 
-            // --- 2. PASA LA FUNCIÓN DE NAVEGACIÓN ---
+            // --- 4. PASA LA FUNCIÓN de 'goBack' ---
             onRegresar={() => navigation.goBack()}
           />
         </View>
       </ScrollView>
+
+      {/* --- 5. MODAL DE ALERTA AÑADIDO --- */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalInfo.visible}
+        onRequestClose={closeModal}
+      >
+        <Pressable style={styles.pickerBackdrop} onPress={closeModal} />
+        <View style={styles.alertModalContainer}>
+          <Text style={styles.modalTitle}>{modalInfo.title}</Text>
+          <Text style={styles.modalMessage}>{modalInfo.message}</Text>
+          <View style={styles.modalButtonContainer}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonConfirm, { width: '100%' }]}
+              onPress={closeModal}
+            >
+              <Text style={styles.modalButtonText}>Aceptar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -73,7 +95,60 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 3,
-    backgroundColor: "#d92a1c", // Color de acento
+    backgroundColor: "#d92a1c", 
     marginVertical: 10,
+  },
+
+  // --- 6. ESTILOS DE MODAL AÑADIDOS ---
+  pickerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+  },
+  alertModalContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -175 }, { translateY: -125 }], 
+    width: 350, 
+    backgroundColor: '#2b3042', 
+    borderRadius: 20,
+    padding: 20,
+    elevation: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#f0f0f0',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#f0f0f0',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center', 
+  },
+  modalButton: {
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+  },
+  modalButtonConfirm: {
+    backgroundColor: '#77a7ab', 
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -35,7 +35,7 @@ function crearEmpleadoVacio() {
 export function useAgregarEmpleadoLogic() {
   const [empleado, setEmpleado] = useState(crearEmpleadoVacio());
   
-  // --- NUEVO: Estado para el modal de alerta ---
+  // --- Estado para el modal de alerta ---
   const [modalInfo, setModalInfo] = useState({ visible: false, title: "", message: "" });
 
   const handleEmpleadoChange = (key, value) => {
@@ -48,7 +48,7 @@ export function useAgregarEmpleadoLogic() {
   const guardarNuevoEmpleado = async () => {
 
     if (!empleado.nombres || !empleado.apellidoPaterno || !empleado.nombreUsuario || !empleado.contraseña) {
-      // --- CAMBIO: Usamos el modal ---
+      // --- Usamos el modal ---
       setModalInfo({ 
         visible: true, 
         title: "Campos incompletos", 
@@ -75,14 +75,14 @@ export function useAgregarEmpleadoLogic() {
       const data = await response.json();
 
       if (!response.ok || data.success === false) {
-        // --- CAMBIO: Usamos el modal ---
+        // --- Usamos el modal ---
         setModalInfo({ 
           visible: true, 
           title: "Error al guardar", 
           message: data.message || "No se pudo crear el empleado."
         });
       } else {
-        // --- CAMBIO: Usamos el modal ---
+        // --- Usamos el modal ---
         setModalInfo({ 
           visible: true, 
           title: "Éxito", 
@@ -92,7 +92,7 @@ export function useAgregarEmpleadoLogic() {
       }
     } catch (error) {
       console.error("Error al guardar empleado:", error);
-      // --- CAMBIO: Usamos el modal ---
+      // --- Usamos el modal ---
       setModalInfo({ 
         visible: true, 
         title: "Error de Conexión", 
@@ -101,7 +101,7 @@ export function useAgregarEmpleadoLogic() {
     }
   };
 
-  // --- NUEVO: Función para cerrar el modal ---
+  // --- Función para cerrar el modal ---
   const closeModal = () => {
     setModalInfo({ visible: false, title: "", message: "" });
   };

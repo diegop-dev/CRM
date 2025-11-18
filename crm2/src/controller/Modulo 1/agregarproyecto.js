@@ -1,123 +1,141 @@
 import { useState, useEffect } from "react";
-import { Alert } from "react-native";
-import { API_URL } from "../../config/apiConfig"; // Asumo que tienes esto
+// import { Alert } from "react-native"; // <-- Eliminamos Alert
+import { API_URL } from "../../config/apiConfig"; 
 
-// Función para crear un objeto de proyecto vacío
+// (crearProyectoVacio no cambia)
 function crearProyectoVacio() {
-  return {
-    id_proyecto: "",
-    nombreProyecto: "",
-    tipoProyecto: "",
-    diaInicio: "",
-    mesInicio: "",
-    añoInicio: "",
-    diaFin: "",
-    mesFin: "",
-    añoFin: "",
-    descripcion: "",
-    idResponsable: "", // <-- ¡Importante! Usamos idResponsable
-    estado: "",
-    prioridad: "",
-    RecursosList: [], // Guardamos como array
-  };
+  return {
+    id_proyecto: "",
+    nombreProyecto: "",
+    tipoProyecto: "",
+    diaInicio: "",
+    mesInicio: "",
+    añoInicio: "",
+    diaFin: "",
+    mesFin: "",
+    añoFin: "",
+    descripcion: "",
+    idResponsable: "",
+    responsableNombre: "", // <-- Importante añadir este (si no estaba)
+    estado: "",
+    prioridad: "",
+    RecursosList: [], 
+  };
 }
 
 export function useAgregarProyectoLogic() {
-  // Estado para el objeto proyecto
-  const [proyecto, setProyecto] = useState(crearProyectoVacio());
+  const [proyecto, setProyecto] = useState(crearProyectoVacio());
+  const [empleadosList, setEmpleadosList] = useState([]);
   
-  // Estado para la lista de empleados (para el picker de responsable)
-  const [empleadosList, setEmpleadosList] = useState([]);
+  // --- NUEVO: Estado para el modal de alerta ---
+  const [modalInfo, setModalInfo] = useState({ visible: false, title: "", message: "" });
 
-  // --- EFECTO PARA CARGAR EMPLEADOS ---
-  // Se ejecuta una vez al cargar la pantalla
-  useEffect(() => {
-    async function fetchEmpleados() {
-      try {
-        // Usamos la ruta que ya creamos para Empleados
-        const response = await fetch(`${API_URL}/empleados/todos`);
-        if (!response.ok) {
-          throw new Error("No se pudo cargar la lista de empleados");
-        }
-        const data = await response.json();
-        if (data.success) {
-          setEmpleadosList(data.empleados);
-        } else {
-          Alert.alert("Error", data.message || "Error al cargar empleados.");
-        }
-      } catch (error) {
-        console.error("Error al cargar empleados:", error);
-        Alert.alert("Error de Conexión", error.message);
-      }
-    }
-    fetchEmpleados();
-  }, []); // El array vacío asegura que solo se ejecute una vez
+  useEffect(() => {
+    async function fetchEmpleados() {
+      try {
+        const response = await fetch(`${API_URL}/empleados/todos`);
+        if (!response.ok) {
+          throw new Error("No se pudo cargar la lista de empleados");
+        }
+        const data = await response.json();
+        if (data.success) {
+          setEmpleadosList(data.empleados);
+        } else {
+          // --- CAMBIO: Usamos el modal ---
+          setModalInfo({ visible: true, title: "Error", message: data.message || "Error al cargar empleados." });
+        }
+      } catch (error) {
+        console.error("Error al cargar empleados:", error);
+        // --- CAMBIO: Usamos el modal ---
+        setModalInfo({ visible: true, title: "Error de Conexión", message: error.message });
+      }
+    }
+    fetchEmpleados();
+  }, []); 
 
-  // Función genérica para actualizar el estado del proyecto
-  const handleProyectoChange = (key, value) => {
-    setProyecto(prevState => ({
-      ...prevState,
-      [key]: value
-    }));
-  };
+  const handleProyectoChange = (key, value) => {
+    setProyecto(prevState => ({
+      ...prevState,
+      [key]: value
+    }));
+  };
 
-  // Función para guardar el proyecto
-  const guardarNuevoProyecto = async () => {
-    // --- Validación simple ---
-    if (!proyecto.nombreProyecto || !proyecto.idResponsable || !proyecto.estado) {
-      Alert.alert("Campos incompletos", "Por favor, llene al menos Nombre, Responsable y Estado.");
-      return;
-    }
-
-    // --- Preparar datos para el backend ---
-    const fechaInicio = proyecto.diaInicio && proyecto.mesInicio && proyecto.añoInicio
-      ? `${proyecto.añoInicio}-${proyecto.mesInicio.padStart(2, "0")}-${proyecto.diaInicio.padStart(2, "0")}`
-      : null; // Opcional: manejar fechas nulas
-
-    const fechaFin = proyecto.diaFin && proyecto.mesFin && proyecto.añoFin
-      ? `${proyecto.añoFin}-${proyecto.mesFin.padStart(2, "0")}-${proyecto.diaFin.padStart(2, "0")}`
-      : null;
-
-    const dataParaEnviar = {
-      nombreProyecto: proyecto.nombreProyecto.trim(),
-      tipoProyecto: proyecto.tipoProyecto,
-      fechaInicio: fechaInicio,
-      fechaFin: fechaFin,
-      idResponsable: proyecto.idResponsable, // Enviamos el ID
-      estado: proyecto.estado,
-      prioridad: proyecto.prioridad,
-      // Convertimos el array de recursos a un string JSON para guardarlo en la DB
-      recursosAsignados: JSON.stringify(proyecto.RecursosList),
-      descripcion: proyecto.descripcion.trim(),
-    };
-
-    try {
-      // Llamamos a la nueva ruta del backend
-      const response = await fetch(`${API_URL}/proyectos/guardar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dataParaEnviar),
+  const guardarNuevoProyecto = async () => {
+    if (!proyecto.nombreProyecto || !proyecto.idResponsable || !proyecto.estado) {
+      // --- CAMBIO: Usamos el modal ---
+      setModalInfo({ 
+        visible: true, 
+        title: "Campos incompletos", 
+        message: "Por favor, llene al menos Nombre, Responsable y Estado." 
       });
+      return;
+    }
 
-      const data = await response.json();
+    const fechaInicio = proyecto.diaInicio && proyecto.mesInicio && proyecto.añoInicio
+      ? `${proyecto.añoInicio}-${proyecto.mesInicio.padStart(2, "0")}-${proyecto.diaInicio.padStart(2, "0")}`
+      : null; 
+    const fechaFin = proyecto.diaFin && proyecto.mesFin && proyecto.añoFin
+      ? `${proyecto.añoFin}-${proyecto.mesFin.padStart(2, "0")}-${proyecto.diaFin.padStart(2, "0")}`
+      : null;
 
-      if (!response.ok || data.success === false) {
-        Alert.alert("Error al guardar", data.message || "No se pudo crear el proyecto.");
-      } else {
-        Alert.alert("Éxito", "Proyecto guardado correctamente.");
-        // Limpiamos el formulario
-        setProyecto(crearProyectoVacio());
-      }
-    } catch (error) {
-      console.error("Error al guardar proyecto:", error);
-      Alert.alert("Error de Conexión", "No se pudo conectar con el servidor.");
-    }
+    const dataParaEnviar = {
+      nombreProyecto: proyecto.nombreProyecto.trim(),
+      tipoProyecto: proyecto.tipoProyecto,
+      fechaInicio: fechaInicio,
+      fechaFin: fechaFin,
+      idResponsable: proyecto.idResponsable, 
+      estado: proyecto.estado,
+      prioridad: proyecto.prioridad,
+      recursosAsignados: JSON.stringify(proyecto.RecursosList),
+      descripcion: proyecto.descripcion.trim(),
+    };
+
+    try {
+      const response = await fetch(`${API_URL}/proyectos/guardar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataParaEnviar),
+      });
+      const data = await response.json();
+
+      if (!response.ok || data.success === false) {
+        // --- CAMBIO: Usamos el modal ---
+        setModalInfo({ 
+          visible: true, 
+          title: "Error al guardar", 
+          message: data.message || "No se pudo crear el proyecto."
+        });
+      } else {
+        // --- CAMBIO: Usamos el modal ---
+        setModalInfo({ 
+          visible: true, 
+          title: "Éxito", 
+          message: "Proyecto guardado correctamente."
+        });
+        setProyecto(crearProyectoVacio());
+      }
+    } catch (error) {
+      console.error("Error al guardar proyecto:", error);
+      // --- CAMBIO: Usamos el modal ---
+      setModalInfo({ 
+        visible: true, 
+        title: "Error de Conexión", 
+        message: "No se pudo conectar con el servidor."
+      });
+    }
+  };
+
+  // --- NUEVO: Función para cerrar el modal ---
+  const closeModal = () => {
+    setModalInfo({ visible: false, title: "", message: "" });
   };
 
-  return {
-    proyecto,
-    empleadosList, // Pasamos la lista de empleados al formulario
-    onChange: handleProyectoChange,
-    onGuardar: guardarNuevoProyecto,
-  };
+  return {
+    proyecto,
+    empleadosList,
+    onChange: handleProyectoChange,
+    onGuardar: guardarNuevoProyecto,
+    modalInfo, // <-- Exportamos el estado del modal
+    closeModal, // <-- Exportamos la función de cierre
+  };
 }
