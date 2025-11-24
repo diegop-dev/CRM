@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "",
+    "slug": "JOSELIASNRMX",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/LOGO_BLANCO.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/LOGO_BLANCO.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2b3042"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/LOGO_BLANCO.png",
+        "backgroundColor": "#2b3042"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/LOGO_BLANCO.png",
+      "bundler": "metro"
+    }
+  }
+}
